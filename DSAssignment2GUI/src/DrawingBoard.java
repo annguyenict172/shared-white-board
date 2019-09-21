@@ -1,6 +1,7 @@
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.IconifyAction;
-
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -9,6 +10,9 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -34,6 +38,31 @@ public class DrawingBoard extends Application{
 		AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
 		Canvas canvas = new Canvas(1245, 775);
 		GraphicsContext graph = canvas.getGraphicsContext2D();
+		
+//		menu part
+		MenuBar menuBar = new MenuBar();
+		Menu fileMenu = new Menu("File");
+		Menu helpMenu = new Menu("Help");
+		MenuItem item1 = new MenuItem("New");
+		MenuItem item2 = new MenuItem("Open");
+		MenuItem item3 = new MenuItem("Save");
+		MenuItem item4 = new MenuItem("Save As");
+		MenuItem item5 = new MenuItem("Close");
+		MenuItem item6 = new MenuItem("Guide");
+		fileMenu.getItems().addAll(item1, item2, item3, item4, item5);
+		helpMenu.getItems().addAll(item6);
+		menuBar.getMenus().addAll(fileMenu, helpMenu);
+
+//		all menu items events
+		item6.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent event) {
+				try {
+					guide();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
 		
 //		random line part
 		Tooltip tip1 = new Tooltip("Random line tool");
@@ -210,7 +239,6 @@ public class DrawingBoard extends Application{
 								else if(w<0 && h<0)
 									graph.strokeOval(x+w, y+h, -w, -w);
 							}
-								
 						}
 					}
 				});
@@ -223,7 +251,7 @@ public class DrawingBoard extends Application{
 		Button eraserButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("rubber.png"))));
 		eraserButton.setTooltip(tip5);
 		eraserButton.setPrefHeight(55);
-		eraserButton.setPrefWidth(80);
+		eraserButton.setPrefWidth(55);
 		eraserButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
 			double x;
 			double y;
@@ -259,12 +287,13 @@ public class DrawingBoard extends Application{
 		textButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
 			double x;
 			double y;
-			TextField text = new TextField();
+			TextField text;
 			public void handle(MouseEvent event) {
 				aPane.setOnMouseClicked(new EventHandler<MouseEvent>() {					
 					int count = 0;
 						public void handle(MouseEvent event) {
 							if(count == 0) {
+								text = new TextField();
 								x = event.getX();
 								y = event.getY();
 								text.setOpacity(0.5);
@@ -375,7 +404,7 @@ public class DrawingBoard extends Application{
 //	    root anchorPane
 		AnchorPane root = new AnchorPane();
 		root.setStyle("-fx-background-color:#F8F8FF;");	
-		root.getChildren().addAll(aPane, toolBox, windowPane);
+		root.getChildren().addAll(aPane, toolBox, windowPane, menuBar);
 		root.setTopAnchor(aPane, 125.0);			//the size of the aPane should be changed following the stage
 		root.setLeftAnchor(aPane, 5.0);
 		root.setRightAnchor(aPane, 285.0);
@@ -385,6 +414,7 @@ public class DrawingBoard extends Application{
 		root.setTopAnchor(windowPane, 125.0);
 		root.setTopAnchor(toolBox, 30.0);
 		root.setLeftAnchor(toolBox, 50.0);
+		root.setTopAnchor(menuBar, 0.0);
 		
 		Scene scene = new Scene(root);
 		
@@ -395,13 +425,45 @@ public class DrawingBoard extends Application{
 		stage.setMinHeight(500);
 		stage.setMinWidth(800);
 		stage.setTitle("IG Drawing Board");
+		stage.show();
 		
 //		String rootPath = getClass().getResource("/").getFile().toString();
 //		System.out.println(rootPath);
 	
 		stage.getIcons().add(new Image(getClass().getResourceAsStream("download.jpg")));		//set the icon of this app
-		stage.show();
+
+//		listen to the stage width and change the length of menubar
+		menuBar.setPrefWidth(root.getWidth());
+		root.widthProperty().addListener(new ChangeListener<Number>() {
+
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				menuBar.setPrefWidth(newValue.doubleValue());
+			}
+			
+		});
 		
-	}
+//		change the size of canvas according to the size of root panel
+		aPane.widthProperty().addListener(new ChangeListener<Number>() {
+
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				canvas.setWidth(newValue.doubleValue());
+			}
+			
+		});
+		aPane.heightProperty().addListener(new ChangeListener<Number>() {
+
+			public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+				canvas.setHeight(newValue.doubleValue());
+			}
+			
+		});
+	}	
 	
+//	the help -> guide stage
+	public void guide() throws Exception{
+		Stage guideStage = new Stage();
+		guideStage.setWidth(500);
+		guideStage.setHeight(500);
+		guideStage.show();
+	}
 }
