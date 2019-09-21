@@ -1,4 +1,4 @@
-import javax.swing.text.html.HTMLDocument.HTMLReader.IsindexAction;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.IconifyAction;
 
 import javafx.application.Application;
 import javafx.event.EventHandler;
@@ -10,6 +10,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -30,6 +31,7 @@ public class DrawingBoard extends Application{
 	}
 
 	public void start(Stage primaryStage) throws Exception {
+		AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
 		Canvas canvas = new Canvas(1245, 775);
 		GraphicsContext graph = canvas.getGraphicsContext2D();
 		
@@ -221,33 +223,63 @@ public class DrawingBoard extends Application{
 		Button eraserButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("rubber.png"))));
 		eraserButton.setTooltip(tip5);
 		eraserButton.setPrefHeight(55);
-		eraserButton.setPrefWidth(55);
+		eraserButton.setPrefWidth(80);
 		eraserButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
 			double x;
 			double y;
 			public void handle(MouseEvent event) {
+				
 				canvas.setOnDragDetected(new EventHandler<MouseEvent>() {
 					public void handle(MouseEvent event) {
 						canvas.startFullDrag();						//must have this method, if you want to have full drag operation
-						graph.setStroke(Color.WHITE);
-						graph.setLineWidth(20);
-						x = event.getX();
-						y = event.getY();
 					}
 				});
 				canvas.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		//we must have this method, although it do nothing
 					public void handle(MouseDragEvent event) {
-						if(x==-1 && y==-1) {
-							x = event.getX();
-							y = event.getY();
-						}
-						graph.strokeLine(x, y, event.getX(), event.getY());
 						x = event.getX();
 						y = event.getY();
+						graph.clearRect(x-10, y-10, 20, 20);
 					}
 				});
 				canvas.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
 					public void handle(MouseDragEvent event) {
+					}
+				});
+			}
+		});
+		
+//		text tool
+		Tooltip tip6 = new Tooltip("Text tool");
+		tip1.setFont(Font.font(15));	
+		Button textButton = new Button("A");
+		textButton.setFont(Font.font(26));
+		textButton.setTooltip(tip6);
+		textButton.setPrefHeight(55);
+		textButton.setPrefWidth(55);
+		textButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			double x;
+			double y;
+			TextField text = new TextField();
+			public void handle(MouseEvent event) {
+				aPane.setOnMouseClicked(new EventHandler<MouseEvent>() {					
+					int count = 0;
+						public void handle(MouseEvent event) {
+							if(count == 0) {
+								x = event.getX();
+								y = event.getY();
+								text.setOpacity(0.5);
+								text.setPromptText("Input text here");
+								text.setFocusTraversable(false);	
+								aPane.getChildren().add(text);
+								aPane.setLeftAnchor(text, x);
+								aPane.setTopAnchor(text, y);
+								count = 1;
+							}
+							else if(count == 1) {
+								aPane.getChildren().removeAll(text);
+								graph.fillText(text.getText(), x+10, y+20);
+								count = 2;
+							}
 					}
 				});
 			}
@@ -288,8 +320,7 @@ public class DrawingBoard extends Application{
 		toolBox.setPadding(new Insets(5.0));
 		toolBox.setSpacing(5);					//space between tools
 		toolBox.setAlignment(Pos.TOP_LEFT);		//all the tools are top-left
-		toolBox.getChildren().addAll(randomLineButton, lineButton, rectangleButton, roundButton, eraserButton, separateLine1, lineWidth);			//add all the tool buttons here
-	
+		toolBox.getChildren().addAll(randomLineButton, lineButton, rectangleButton, roundButton, eraserButton, textButton, separateLine1, lineWidth);			//add all the tool buttons here
 //		the label on the right		
 		Label label1 = new Label("		    Members list");
 		Label label2 = new Label("		       Dialogue");
@@ -333,7 +364,7 @@ public class DrawingBoard extends Application{
 //		frame.setStrokeWidth(10);
 //		windowPane.getChildren().addAll(frame);	
 		
-		AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
+
 		aPane.setStyle("-fx-background-color:#FFFFFF;");	//white color board	
 		aPane.getChildren().addAll(canvas);					//children of aPane
 		aPane.setTopAnchor(canvas, 0.0);			//the size of the aPane should be changed following the stage
