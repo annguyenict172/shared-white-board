@@ -1,11 +1,15 @@
+import java.io.*;
+import javax.imageio.ImageIO;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
@@ -18,6 +22,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -29,6 +34,8 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 public class DrawingBoard extends Application{
+	public static boolean status = false;		//if status = false, the picture have not been saved yet. if status = true, the picture have been saved
+	public static String saveRoute;
 
 	public static void main(String[] args) {
 		launch(args);
@@ -54,6 +61,52 @@ public class DrawingBoard extends Application{
 		menuBar.getMenus().addAll(fileMenu, helpMenu);
 
 //		all menu items events
+		item1.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent event) {
+				try {
+					graph.clearRect(0, 0, 10000, 10000);
+					status = false;
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		item2.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent event) {
+				try {
+					open(graph);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		item3.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent event) {
+				try {
+					save(canvas);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		item4.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent event) {
+				try {
+					saveAs(canvas, 0);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		item5.setOnAction(new EventHandler<ActionEvent>() {
+			public void handle(ActionEvent event) {
+				try {
+					close(canvas);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
 		item6.setOnAction(new EventHandler<ActionEvent>() {
 			public void handle(ActionEvent event) {
 				try {
@@ -63,6 +116,7 @@ public class DrawingBoard extends Application{
 				}
 			}
 		});
+		
 		
 //		random line part
 		Tooltip tip1 = new Tooltip("Random line tool");
@@ -460,10 +514,179 @@ public class DrawingBoard extends Application{
 	}	
 	
 //	the help -> guide stage
-	public void guide() throws Exception{
+	public void guide() {
 		Stage guideStage = new Stage();
 		guideStage.setWidth(500);
 		guideStage.setHeight(500);
 		guideStage.show();
 	}
+	
+	public void saveAs(Canvas canvas, int q) {			//if q =1 the system will be closed after saving
+		AnchorPane aPane = new AnchorPane();
+		
+		Scene scene = new Scene(aPane);
+		
+		Stage Stage = new Stage();
+		Stage.setTitle("Save As");
+		Stage.setScene(scene);
+		Stage.setWidth(600);
+		Stage.setHeight(300);
+		Stage.show();
+		
+		Button saveAsButton = new Button("Save as PNG");		
+		
+		TextField routeTextField = new TextField();
+		routeTextField.setPrefSize(500, 40);
+		routeTextField.setPromptText("Input the directory that you want to save the picture here.");
+		routeTextField.setFocusTraversable(false);	
+		
+		TextField fileNameTextField = new TextField();
+		fileNameTextField.setPrefSize(500, 40);		
+		fileNameTextField.setPrefWidth(200);
+		fileNameTextField.setPromptText("The name of the file here.");
+		fileNameTextField.setFocusTraversable(false);	
+		
+		aPane.getChildren().addAll(fileNameTextField ,routeTextField, saveAsButton);
+		aPane.setTopAnchor(saveAsButton, 200.0);
+		aPane.setLeftAnchor(saveAsButton, 245.0);
+		aPane.setTopAnchor(routeTextField, 100.0);
+		aPane.setLeftAnchor(routeTextField, 40.0);
+		aPane.setTopAnchor(fileNameTextField, 50.0);
+		aPane.setLeftAnchor(fileNameTextField, 200.0);
+		Label alertLabel = new Label();			//show the operation status 
+		aPane.getChildren().add(alertLabel);
+		
+		saveAsButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+			public void handle(MouseEvent event) {
+				WritableImage image = canvas.snapshot(new SnapshotParameters(), null);
+				try {
+					File file = new File(routeTextField.getText() + "\\" + fileNameTextField.getText()+ ".png");
+					ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+					alertLabel.setText("Saving success!");
+					aPane.setTopAnchor(alertLabel, 150.0);
+					aPane.setLeftAnchor(alertLabel, 245.0);
+					saveRoute = routeTextField.getText() + "\\" + fileNameTextField.getText()+ ".png";
+					status = true;
+					if(q==1)
+						System.exit(0);
+				}catch(Exception e) {		
+					alertLabel.setText("Sorry! Saving fails. Something wrong with the route or file name.");
+					aPane.setTopAnchor(alertLabel, 150.0);
+					aPane.setLeftAnchor(alertLabel, 50.0);
+				}
+			}
+		});		
+	} 
+	
+	public void open(GraphicsContext graph) {
+		Label alertLabel = new Label();			//show the operation status 
+		
+		AnchorPane aPane = new AnchorPane();
+		
+		Scene scene = new Scene(aPane);
+		
+		Stage stage = new Stage();
+		stage.setTitle("Open");
+		stage.setScene(scene);
+		stage.setWidth(600);
+		stage.setHeight(300);
+		stage.show();
+		
+		Button open = new Button("Open");		
+		
+		TextField routeTextField = new TextField();
+		routeTextField.setPrefSize(500, 40);
+		routeTextField.setPromptText("Input the file route here.");
+		routeTextField.setFocusTraversable(false);	
+		
+		aPane.getChildren().addAll(open ,routeTextField);
+		aPane.setTopAnchor(open, 200.0);
+		aPane.setLeftAnchor(open, 265.0);
+		aPane.setTopAnchor(routeTextField, 80.0);
+		aPane.setLeftAnchor(routeTextField, 40.0);
+		aPane.getChildren().add(alertLabel);
+		
+		open.setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+			public void handle(MouseEvent event) {
+				try {
+					File file = new File(routeTextField.getText());
+					if(file.exists()){				//to see whether the rought is right
+						Image image = new Image("file:"+routeTextField.getText());
+						graph.clearRect(0, 0, 10000, 10000);
+						graph.drawImage(image, 0, 0);
+						status = true;
+						saveRoute = routeTextField.getText();
+						stage.close();						
+					}
+					else {
+						throw new Exception();
+					}
+				}catch(Exception e) {	
+					alertLabel.setText("Fail! Something wrong with the route.");
+					aPane.setTopAnchor(alertLabel, 150.0);
+					aPane.setLeftAnchor(alertLabel, 180.0);
+				}
+			}
+		});		
+	}
+	public void close(Canvas canvas) {
+		Button yesButton = new Button("YES");
+		yesButton.setPrefWidth(100);
+		Button noButton = new Button("NO");
+		noButton.setPrefWidth(100);
+		Label label = new Label("Do you want to save the picture?");
+		
+		AnchorPane aPane = new AnchorPane();
+		aPane.getChildren().addAll(yesButton, noButton, label);
+		aPane.setTopAnchor(label, 100.0);
+		aPane.setLeftAnchor(label, 180.0);
+		aPane.setTopAnchor(yesButton, 150.0);
+		aPane.setLeftAnchor(yesButton, 150.0);
+		aPane.setTopAnchor(noButton, 150.0);
+		aPane.setLeftAnchor(noButton, 350.0);
+		
+		Scene scene = new Scene(aPane);
+		
+		Stage stage = new Stage();
+		stage.setTitle("Open");
+		stage.setScene(scene);
+		stage.setWidth(600);
+		stage.setHeight(300);
+		stage.show();
+		
+		noButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+			public void handle(MouseEvent event) {
+				System.exit(0);
+			}
+		});
+		yesButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+			public void handle(MouseEvent event) {
+				if(!status) {
+					saveAs(canvas, 1);		//1 means when finish the operation, the system will be closed				
+				}
+				else if(status) {
+					save(canvas);
+				}
+				stage.close();
+			}
+		});
+	}
+	public void save(Canvas canvas) {
+		if(!status)
+			saveAs(canvas, 0);
+		else {
+			try {
+				File file = new File(saveRoute);
+				WritableImage image = canvas.snapshot(new SnapshotParameters(), null);
+				ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
 }
