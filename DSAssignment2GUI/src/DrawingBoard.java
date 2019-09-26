@@ -17,6 +17,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -29,22 +30,93 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 public class DrawingBoard extends Application{
 	public static boolean status = false;		//if status = false, the picture have not been saved yet. if status = true, the picture have been saved
-	public static String saveRoute;
+	public static String saveRoute;			//record the save route
+	public static double eraserSize = 20.0;	//record the eraser size
+	public static double fontSize = 20;		//record the text size
+	public static int count = 0;			//used to control the sequence of text tool events
 
 	public static void main(String[] args) {
 		launch(args);
 	}
 
 	public void start(Stage primaryStage) throws Exception {
+		AnchorPane root = new AnchorPane();
 		AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
+		AnchorPane textPane = new AnchorPane();				//used to show the text label and shape moving tracks
 		Canvas canvas = new Canvas(1245, 775);
 		GraphicsContext graph = canvas.getGraphicsContext2D();
+		
+//		used to set the width of line 
+		Slider lineWidthSlider = new Slider(1, 30, 1);	
+		Label lineWidthShowing = new Label();
+		lineWidthShowing.setText(Double.toString(1.0));
+		lineWidthSlider.setOnMousePressed(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				lineWidthSlider.setOnMouseReleased(new EventHandler<MouseEvent>() {
+					public void handle(MouseEvent event) {
+						lineWidthShowing.setText(Double.toString((int)lineWidthSlider.getValue()));
+						graph.setLineWidth((int)lineWidthSlider.getValue());
+					}
+				});
+			}
+		});
+//		used to set the size of eraser	
+		Slider eraserWidthSlider = new Slider(20, 200, 20);
+		Label eraserWidthShowing = new Label();
+		eraserWidthShowing.setText(Double.toString(20.0));
+		eraserWidthSlider.setOnMousePressed(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				eraserWidthSlider.setOnMouseReleased(new EventHandler<MouseEvent>() {
+					public void handle(MouseEvent event) {
+						eraserWidthShowing.setText(Double.toString((int)eraserWidthSlider.getValue()));
+						eraserSize = (int)eraserWidthSlider.getValue();
+					}
+				});
+			}
+		});
+//		used to set the size of text	
+		Slider textSizeSlider = new Slider(10, 60, 20);
+		Label textSizeShowing = new Label();
+		textSizeShowing.setText(Double.toString(20.0));
+		textSizeShowing.setPrefWidth(50);
+		textSizeSlider.setOnMousePressed(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				textSizeSlider.setOnMouseReleased(new EventHandler<MouseEvent>() {
+					public void handle(MouseEvent event) {
+						textSizeShowing.setText(Double.toString((int)textSizeSlider.getValue()));
+						fontSize = (int)textSizeSlider.getValue();
+					}
+				});
+			}
+		});
+		
+//		sliders of line width and eraser size
+		VBox slider = new VBox();
+		HBox lineSliderBox = new HBox();
+		HBox eraserSliderBox = new HBox();
+		HBox textSliderBox = new HBox();
+		Label l1 = new Label("Line");
+		l1.setPrefWidth(60);
+		Label l2 = new Label("Eraser");
+		l2.setPrefWidth(60);
+		Label l3 = new Label("Text");
+		l3.setPrefWidth(60);
+		
+		lineSliderBox.getChildren().addAll(l1, lineWidthSlider, lineWidthShowing);
+		eraserSliderBox.getChildren().addAll(l2, eraserWidthSlider, eraserWidthShowing);
+		textSliderBox.getChildren().addAll(l3, textSizeSlider, textSizeShowing);
+		slider.setPadding(new Insets(5.0));
+		slider.setSpacing(10.0);
+		slider.getChildren().addAll(lineSliderBox, eraserSliderBox, textSliderBox);
 		
 //		menu part
 		MenuBar menuBar = new MenuBar();
@@ -129,14 +201,14 @@ public class DrawingBoard extends Application{
 			double x;
 			double y;
 			public void handle(MouseEvent event) {
-				canvas.setOnDragDetected(new EventHandler<MouseEvent>() {
+				aPane.setOnDragDetected(new EventHandler<MouseEvent>() {
 					public void handle(MouseEvent event) {
-						canvas.startFullDrag();						//must have this method, if you want to have full drag operation
+						aPane.startFullDrag();						//must have this method, if you want to have full drag operation
 						x = event.getX();
 						y = event.getY();
 					}
 				});
-				canvas.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		
+				aPane.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		
 					public void handle(MouseDragEvent event) {
 						if(x==-1 && y==-1) {
 							x = event.getX();
@@ -147,7 +219,7 @@ public class DrawingBoard extends Application{
 						y = event.getY();
 					}
 				});
-				canvas.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {		
+				aPane.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {		
 					public void handle(MouseDragEvent event) {
 						x = -1;
 						y = -1;
@@ -169,20 +241,27 @@ public class DrawingBoard extends Application{
 			double x2;
 			double y2;
 			public void handle(MouseEvent event) {
-				canvas.setOnDragDetected(new EventHandler<MouseEvent>() {
+				aPane.setOnDragDetected(new EventHandler<MouseEvent>() {
 					public void handle(MouseEvent event) {
-						canvas.startFullDrag();						//must have this method, if you want to have full drag operation
+						aPane.startFullDrag();						//must have this method, if you want to have full drag operation
 						x1 = event.getX();
 						y1 = event.getY();
 					}
 				});
-				canvas.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		//we must have this method, although it do nothing
+				aPane.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		//we must have this method, although it do nothing
 					public void handle(MouseDragEvent event) {
-						
+						textPane.getChildren().clear();
+						x2 = event.getX();
+						y2 = event.getY();
+						Line lineTrack = new Line(x1, y1, x2, y2);
+						lineTrack.setStrokeWidth(lineWidthSlider.getValue());
+						lineTrack.setOpacity(0.05);
+						textPane.getChildren().add(lineTrack);
 					}
 				});
-				canvas.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
+				aPane.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
 					public void handle(MouseDragEvent event) {
+						textPane.getChildren().clear();
 						x2 = event.getX();
 						y2 = event.getY();
 						graph.strokeLine(x1, y1, x2, y2);
@@ -193,7 +272,7 @@ public class DrawingBoard extends Application{
 		
 // 		rec tool
 		Tooltip tip3 = new Tooltip("Rectangle tool");
-		tip1.setFont(Font.font(15));	
+		tip3.setFont(Font.font(15));	
 		Button rectangleButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("rectangle.png"))));
 		rectangleButton.setTooltip(tip3);
 		rectangleButton.setPrefHeight(55);
@@ -204,20 +283,43 @@ public class DrawingBoard extends Application{
 			double w;
 			double h;
 			public void handle(MouseEvent event) {
-				canvas.setOnDragDetected(new EventHandler<MouseEvent>() {
+				aPane.setOnDragDetected(new EventHandler<MouseEvent>() {
 					public void handle(MouseEvent event) {
-						canvas.startFullDrag();						//must have this method, if you want to have full drag operation
+						aPane.startFullDrag();						//must have this method, if you want to have full drag operation
 						x = event.getX();
 						y = event.getY();
 					}
 				});
-				canvas.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		//we must have this method, although it do nothing
+				aPane.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		//we must have this method, although it do nothing
 					public void handle(MouseDragEvent event) {
-						
+						textPane.getChildren().clear();
+						w = event.getX() - x;
+						h = event.getY() - y;
+						if(w>0 && h>0) {
+							Rectangle recTrack = new Rectangle(x, y, w, h);
+							recTrack.setOpacity(0.03);
+							textPane.getChildren().add(recTrack);
+						}
+						else if(w>0 && h<0) {
+							Rectangle recTrack = new Rectangle(x, y+h, w, -h);
+							recTrack.setOpacity(0.03);
+							textPane.getChildren().add(recTrack);
+						}
+						else if(w<0 && h>0) {
+							Rectangle recTrack = new Rectangle(x+w, y, -w, h);
+							recTrack.setOpacity(0.03);
+							textPane.getChildren().add(recTrack);
+						}
+						else if(w<0 && h<0) {
+							Rectangle recTrack = new Rectangle(x+w, y+h, -w, -h);
+							recTrack.setOpacity(0.03);
+							textPane.getChildren().add(recTrack);
+						}
 					}
 				});
-				canvas.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
+				aPane.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
 					public void handle(MouseDragEvent event) {
+						textPane.getChildren().clear();
 						w = event.getX() - x;
 						h = event.getY() - y;
 						if(w>0 && h>0)
@@ -236,7 +338,7 @@ public class DrawingBoard extends Application{
 		
 // 		oval tool
 		Tooltip tip4 = new Tooltip("Oval tool. Draw circle when pressing Ctrl.");
-		tip1.setFont(Font.font(15));	
+		tip4.setFont(Font.font(15));	
 		Button roundButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("oval.png"))));
 		roundButton.setTooltip(tip4);
 		roundButton.setPrefHeight(55);
@@ -247,19 +349,91 @@ public class DrawingBoard extends Application{
 			double w;
 			double h;
 			public void handle(MouseEvent event) {
-				canvas.setOnDragDetected(new EventHandler<MouseEvent>() {
+				aPane.setOnDragDetected(new EventHandler<MouseEvent>() {
 					public void handle(MouseEvent event) {
-						canvas.startFullDrag();						//must have this method, if you want to have full drag operation
+						aPane.startFullDrag();						//must have this method, if you want to have full drag operation
 						x = event.getX();
 						y = event.getY();
 					}
 				});
-				canvas.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		//we must have this method, although it do nothing
+				aPane.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		//we must have this method, although it do nothing
 					public void handle(MouseDragEvent event) {
+						textPane.getChildren().clear();
+						w = (event.getX()-x);
+						h = (event.getY()-y);
+						if(!event.isControlDown()) {				//if do not press ctrl, draw oval
+							if(w>0 && h>0) {
+								Ellipse ellipseTrack = new Ellipse(x+w/2, y+h/2, w/2, h/2);
+								ellipseTrack.setOpacity(0.03);
+								textPane.getChildren().add(ellipseTrack);
+							}
+							else if(w>0 && h<0) {
+								Ellipse ellipseTrack = new Ellipse(x+w/2, y+h/2, w/2, -h/2);
+								ellipseTrack.setOpacity(0.03);
+								textPane.getChildren().add(ellipseTrack);
+							}
+							else if(w<0 && h>0) {
+								Ellipse ellipseTrack = new Ellipse(x+w/2, y+h/2, -w/2, h/2);
+								ellipseTrack.setOpacity(0.03);
+								textPane.getChildren().add(ellipseTrack);
+							}
+							else if(w<0 && h<0) {
+								Ellipse ellipseTrack = new Ellipse(x+w/2, y+h/2, -w/2, -h/2);
+								ellipseTrack.setOpacity(0.03);
+								textPane.getChildren().add(ellipseTrack);
+							}
+						}
+						else if(event.isControlDown()) {			//draw circle when press ctrl
+							if((Math.abs(w)-Math.abs(h))>0) {
+								if(w>0 && h>0) {
+									Circle circleTrack = new Circle(x+h/2, y+h/2, h/2);
+									circleTrack.setOpacity(0.03);
+									textPane.getChildren().add(circleTrack);
+								}
+								else if(w>0 && h<0) {
+									Circle circleTrack = new Circle(x-h/2, y+h/2, -h/2);
+									circleTrack.setOpacity(0.03);
+									textPane.getChildren().add(circleTrack);
+								}
+								else if(w<0 && h>0) {
+									Circle circleTrack = new Circle(x-h/2, y+h/2, h/2);
+									circleTrack.setOpacity(0.03);
+									textPane.getChildren().add(circleTrack);
+								}
+								else if(w<0 && h<0) {
+									Circle circleTrack = new Circle(x+h/2, y+h/2, -h/2);
+									circleTrack.setOpacity(0.03);
+									textPane.getChildren().add(circleTrack);
+								}
+							}
+							else if((Math.abs(w)-Math.abs(h))<0) {
+								if(w>0 && h>0) {
+									Circle circleTrack = new Circle(x+w/2, y+w/2, w/2);
+									circleTrack.setOpacity(0.03);
+									textPane.getChildren().add(circleTrack);
+								}
+								else if(w>0 && h<0) {
+									Circle circleTrack = new Circle(x+w/2, y-w/2, w/2);
+									circleTrack.setOpacity(0.03);
+									textPane.getChildren().add(circleTrack);
+								}
+								else if(w<0 && h>0) {
+									Circle circleTrack = new Circle(x+w/2, y-w/2, -w/2);
+									circleTrack.setOpacity(0.03);
+									textPane.getChildren().add(circleTrack);
+								}
+								else if(w<0 && h<0) {
+									Circle circleTrack = new Circle(x+w/2, y+w/2, -w/2);
+									circleTrack.setOpacity(0.03);
+									textPane.getChildren().add(circleTrack);
+								}
+							}
+						}
 					}
 				});
-				canvas.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
+				aPane.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
 					public void handle(MouseDragEvent event) {
+						textPane.getChildren().clear();
 						w = (event.getX()-x);
 						h = (event.getY()-y);
 						if(!event.isControlDown()) {				//if do not press ctrl, draw oval
@@ -279,19 +453,19 @@ public class DrawingBoard extends Application{
 								else if(w>0 && h<0)
 									graph.strokeOval(x, y+h, -h, -h);
 								else if(w<0 && h>0)
-									graph.strokeOval(x+w, y, h, h);
+									graph.strokeOval(x-h, y, h, h);
 								else if(w<0 && h<0)
-									graph.strokeOval(x+w, y+h, -h, -h);
+									graph.strokeOval(x+h, y+h, -h, -h);
 							}
 							else if((Math.abs(w)-Math.abs(h))<0) {
 								if(w>0 && h>0)
 									graph.strokeOval(x, y, w, w);
 								else if(w>0 && h<0)
-									graph.strokeOval(x, y+h, w, w);
+									graph.strokeOval(x, y-w, w, w);
 								else if(w<0 && h>0)
 									graph.strokeOval(x+w, y, -w, -w);
 								else if(w<0 && h<0)
-									graph.strokeOval(x+w, y+h, -w, -w);
+									graph.strokeOval(x+w, y+w, -w, -w);
 							}
 						}
 					}
@@ -301,7 +475,7 @@ public class DrawingBoard extends Application{
 
 // 		eraser tool
 		Tooltip tip5 = new Tooltip("Eraser tool");
-		tip1.setFont(Font.font(15));	
+		tip5.setFont(Font.font(15));	
 		Button eraserButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("rubber.png"))));
 		eraserButton.setTooltip(tip5);
 		eraserButton.setPrefHeight(55);
@@ -310,21 +484,28 @@ public class DrawingBoard extends Application{
 			double x;
 			double y;
 			public void handle(MouseEvent event) {
-				
-				canvas.setOnDragDetected(new EventHandler<MouseEvent>() {
+				aPane.setOnDragDetected(new EventHandler<MouseEvent>() {
 					public void handle(MouseEvent event) {
-						canvas.startFullDrag();						//must have this method, if you want to have full drag operation
+						aPane.startFullDrag();						//must have this method, if you want to have full drag operation
+						Rectangle eraserTrack = new Rectangle(event.getX()-eraserSize/2, event.getY()-eraserSize/2, eraserSize, eraserSize);
+						eraserTrack.setOpacity(0.05);
+						textPane.getChildren().add(eraserTrack);
 					}
 				});
-				canvas.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		//we must have this method, although it do nothing
+				aPane.setOnMouseDragOver(new EventHandler<MouseDragEvent>() {		//we must have this method, although it do nothing
 					public void handle(MouseDragEvent event) {
+						textPane.getChildren().clear();
 						x = event.getX();
 						y = event.getY();
-						graph.clearRect(x-10, y-10, 20, 20);
+						Rectangle eraserTrack = new Rectangle(event.getX()-eraserSize/2, event.getY()-eraserSize/2, eraserSize, eraserSize);
+						eraserTrack.setOpacity(0.05);
+						textPane.getChildren().add(eraserTrack);
+						graph.clearRect(x-eraserSize/2, y-eraserSize/2, eraserSize, eraserSize);
 					}
 				});
-				canvas.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
+				aPane.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
 					public void handle(MouseDragEvent event) {
+						textPane.getChildren().clear();
 					}
 				});
 			}
@@ -332,7 +513,7 @@ public class DrawingBoard extends Application{
 		
 //		text tool
 		Tooltip tip6 = new Tooltip("Text tool");
-		tip1.setFont(Font.font(15));	
+		tip6.setFont(Font.font(15));	
 		Button textButton = new Button("A");
 		textButton.setFont(Font.font(26));
 		textButton.setTooltip(tip6);
@@ -343,67 +524,45 @@ public class DrawingBoard extends Application{
 			double y;
 			TextField text;
 			public void handle(MouseEvent event) {
-				aPane.setOnMouseClicked(new EventHandler<MouseEvent>() {					
-					int count = 0;
+				count = 0;
+				textPane.getChildren().clear();
+				root.setOnMouseClicked(new EventHandler<MouseEvent>() {					
 						public void handle(MouseEvent event) {
 							if(count == 0) {
 								text = new TextField();
-								x = event.getX();
-								y = event.getY();
+								x = event.getX()-5;
+								y = event.getY()-125;
 								text.setOpacity(0.5);
+								text.setFont(Font.font(fontSize));;
 								text.setPromptText("Input text here");
 								text.setFocusTraversable(false);	
-								aPane.getChildren().add(text);
-								aPane.setLeftAnchor(text, x);
-								aPane.setTopAnchor(text, y);
+								textPane.getChildren().add(text);
+								textPane.setLeftAnchor(text, x);
+								textPane.setTopAnchor(text, y);
 								count = 1;
 							}
 							else if(count == 1) {
-								aPane.getChildren().removeAll(text);
-								graph.fillText(text.getText(), x+10, y+20);
+								textPane.getChildren().removeAll(text);
+								graph.setFont(Font.font(fontSize));
+								graph.fillText(text.getText(), x+fontSize*0.65, y+fontSize*1.33);
 								count = 2;
-							}
+								
+							}							
 					}
 				});
-			}
-		});
-		
-//		Line width button
-		VBox lineWidth = new VBox();
-		Button width1 = new Button("", new ImageView(new Image(getClass().getResourceAsStream("w1.png"))));
-		width1.setPrefSize(100, 25);
-		Button width2 = new Button("", new ImageView(new Image(getClass().getResourceAsStream("w2.png"))));
-		width2.setPrefSize(100, 25);
-		width2.setFont(Font.font(5));
-		Button width3 = new Button("", new ImageView(new Image(getClass().getResourceAsStream("w3.png"))));
-		width3.setPrefSize(100, 25);
-		width3.setFont(Font.font(10));
-		lineWidth.getChildren().addAll(width1, width2, width3);
-		width1.setOnMouseClicked(new EventHandler<MouseEvent>() {
-			public void handle(MouseEvent event) {
-				graph.setLineWidth(1);
-			}
-		});
-		width2.setOnMouseClicked(new EventHandler<MouseEvent>() {
-			public void handle(MouseEvent event) {
-				graph.setLineWidth(5);
-				System.out.println(graph.getLineWidth());
-			}
-		});
-		width3.setOnMouseClicked(new EventHandler<MouseEvent>() {
-			public void handle(MouseEvent event) {
-				graph.setLineWidth(10);
 			}
 		});
 		
 //		all the tools on this panel
 		Line separateLine1 = new Line(0,0,0,80);
 		separateLine1.setStroke(Color.valueOf("#C0C0C0"));
+		Line separateLine2 = new Line(0,0,0,80);
+		separateLine2.setStroke(Color.valueOf("#C0C0C0"));
 		HBox toolBox = new HBox();
 		toolBox.setPadding(new Insets(5.0));
 		toolBox.setSpacing(5);					//space between tools
 		toolBox.setAlignment(Pos.TOP_LEFT);		//all the tools are top-left
-		toolBox.getChildren().addAll(randomLineButton, lineButton, rectangleButton, roundButton, eraserButton, textButton, separateLine1, lineWidth);			//add all the tool buttons here
+		toolBox.getChildren().addAll(randomLineButton, lineButton, rectangleButton, roundButton, eraserButton, textButton, separateLine1, slider, separateLine2);			//add all the tool buttons here
 //		the label on the right		
 		Label label1 = new Label("		    Members list");
 		Label label2 = new Label("		       Dialogue");
@@ -449,14 +608,13 @@ public class DrawingBoard extends Application{
 		
 
 		aPane.setStyle("-fx-background-color:#FFFFFF;");	//white color board	
-		aPane.getChildren().addAll(canvas);					//children of aPane
+		aPane.getChildren().addAll(canvas, textPane);					//children of aPane
 		aPane.setTopAnchor(canvas, 0.0);			//the size of the aPane should be changed following the stage
 		aPane.setLeftAnchor(canvas, 0.0);
 		aPane.setRightAnchor(canvas, 0.0);
 		aPane.setBottomAnchor(canvas, 0.0);
 		
 //	    root anchorPane
-		AnchorPane root = new AnchorPane();
 		root.setStyle("-fx-background-color:#F8F8FF;");	
 		root.getChildren().addAll(aPane, toolBox, windowPane, menuBar);
 		root.setTopAnchor(aPane, 125.0);			//the size of the aPane should be changed following the stage
@@ -511,6 +669,13 @@ public class DrawingBoard extends Application{
 			}
 			
 		});
+		
+//		used to clear the track that does not disappear
+		root.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				textPane.getChildren().clear();
+			}
+		});
 	}	
 	
 //	the help -> guide stage
@@ -542,7 +707,7 @@ public class DrawingBoard extends Application{
 		
 		TextField fileNameTextField = new TextField();
 		fileNameTextField.setPrefSize(500, 40);		
-		fileNameTextField.setPrefWidth(200);
+		fileNameTextField.setPrefWidth(240);
 		fileNameTextField.setPromptText("The name of the file here.");
 		fileNameTextField.setFocusTraversable(false);	
 		
@@ -552,7 +717,7 @@ public class DrawingBoard extends Application{
 		aPane.setTopAnchor(routeTextField, 100.0);
 		aPane.setLeftAnchor(routeTextField, 40.0);
 		aPane.setTopAnchor(fileNameTextField, 50.0);
-		aPane.setLeftAnchor(fileNameTextField, 200.0);
+		aPane.setLeftAnchor(fileNameTextField, 180.0);
 		Label alertLabel = new Label();			//show the operation status 
 		aPane.getChildren().add(alertLabel);
 		
@@ -688,5 +853,4 @@ public class DrawingBoard extends Application{
 			}
 		}
 	}
-	
 }
