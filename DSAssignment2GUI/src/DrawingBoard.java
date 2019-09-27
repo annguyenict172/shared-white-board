@@ -34,15 +34,17 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.StrokeLineCap;
+import javafx.scene.shape.StrokeLineJoin;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 public class DrawingBoard extends Application{
-	public static boolean status = false;		//if status = false, the picture have not been saved yet. if status = true, the picture have been saved
-	public static String saveRoute;			//record the save route
-	public static double eraserSize = 20.0;	//record the eraser size
-	public static double fontSize = 20;		//record the text size
-	public static int count = 0;			//used to control the sequence of text tool events
+	private  boolean status = false;		//if status = false, the picture have not been saved yet. if status = true, the picture have been saved
+	private  String saveRoute;			//record the save route
+	private  double eraserSize = 20.0;	//record the eraser size
+	private  double fontSize = 20;		//record the text size
+	private  int count = 0;			//used to control the sequence of text tool events
 
 	public static void main(String[] args) {
 		launch(args);
@@ -54,6 +56,7 @@ public class DrawingBoard extends Application{
 		AnchorPane textPane = new AnchorPane();				//used to show the text label and shape moving tracks
 		Canvas canvas = new Canvas(1245, 775);
 		GraphicsContext graph = canvas.getGraphicsContext2D();
+		graph.setLineCap(StrokeLineCap.ROUND);
 		
 //		used to set the width of line 
 		Slider lineWidthSlider = new Slider(1, 30, 1);	
@@ -136,8 +139,7 @@ public class DrawingBoard extends Application{
 		item1.setOnAction(new EventHandler<ActionEvent>() {
 			public void handle(ActionEvent event) {
 				try {
-					graph.clearRect(0, 0, 10000, 10000);
-					status = false;
+					newFile(canvas, graph);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -155,7 +157,7 @@ public class DrawingBoard extends Application{
 		item3.setOnAction(new EventHandler<ActionEvent>() {
 			public void handle(ActionEvent event) {
 				try {
-					save(canvas);
+					save(canvas, graph, 0);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -164,7 +166,7 @@ public class DrawingBoard extends Application{
 		item4.setOnAction(new EventHandler<ActionEvent>() {
 			public void handle(ActionEvent event) {
 				try {
-					saveAs(canvas, 0);
+					saveAs(canvas, graph,  0);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -173,7 +175,7 @@ public class DrawingBoard extends Application{
 		item5.setOnAction(new EventHandler<ActionEvent>() {
 			public void handle(ActionEvent event) {
 				try {
-					close(canvas);
+					close(canvas, graph);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -686,7 +688,7 @@ public class DrawingBoard extends Application{
 		guideStage.show();
 	}
 	
-	public void saveAs(Canvas canvas, int q) {			//if q =1 the system will be closed after saving
+	public void saveAs(Canvas canvas,GraphicsContext graph, int q) {			//if q =1 the system will be closed after saving
 		AnchorPane aPane = new AnchorPane();
 		
 		Scene scene = new Scene(aPane);
@@ -735,6 +737,11 @@ public class DrawingBoard extends Application{
 					status = true;
 					if(q==1)
 						System.exit(0);
+					else if(q==2) {
+						graph.clearRect(0, 0, 10000, 10000);
+						status = false;
+						Stage.close();
+					}
 				}catch(Exception e) {		
 					alertLabel.setText("Sorry! Saving fails. Something wrong with the route or file name.");
 					aPane.setTopAnchor(alertLabel, 150.0);
@@ -743,6 +750,53 @@ public class DrawingBoard extends Application{
 			}
 		});		
 	} 
+	
+	public void newFile(Canvas canvas, GraphicsContext graph) {
+		Button yesButton = new Button("YES");
+		yesButton.setPrefWidth(100);
+		Button noButton = new Button("NO");
+		noButton.setPrefWidth(100);
+		Label label = new Label("Do you want to save the current picture?");
+		
+		AnchorPane aPane = new AnchorPane();
+		aPane.getChildren().addAll(yesButton, noButton, label);
+		aPane.setTopAnchor(label, 100.0);
+		aPane.setLeftAnchor(label, 150.0);
+		aPane.setTopAnchor(yesButton, 150.0);
+		aPane.setLeftAnchor(yesButton, 150.0);
+		aPane.setTopAnchor(noButton, 150.0);
+		aPane.setLeftAnchor(noButton, 350.0);
+		
+		Scene scene = new Scene(aPane);
+		
+		Stage stage = new Stage();
+		stage.setTitle("Open");
+		stage.setScene(scene);
+		stage.setWidth(600);
+		stage.setHeight(300);
+		stage.show();
+		
+		noButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+			public void handle(MouseEvent event) {
+				graph.clearRect(0, 0, 10000, 10000);
+				status = false;
+				stage.close();
+			}
+		});
+		yesButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+			public void handle(MouseEvent event) {
+				if(!status) {
+					saveAs(canvas, graph, 2);		//2 means when finish the operation, the canvas will be cleared				
+				} 
+				else if(status) {
+					save(canvas, graph, 2);
+				}
+				stage.close();
+			}
+		});
+	}
 	
 	public void open(GraphicsContext graph) {
 		Label alertLabel = new Label();			//show the operation status 
@@ -796,7 +850,7 @@ public class DrawingBoard extends Application{
 			}
 		});		
 	}
-	public void close(Canvas canvas) {
+	public void close(Canvas canvas, GraphicsContext graph) {
 		Button yesButton = new Button("YES");
 		yesButton.setPrefWidth(100);
 		Button noButton = new Button("NO");
@@ -831,23 +885,29 @@ public class DrawingBoard extends Application{
 
 			public void handle(MouseEvent event) {
 				if(!status) {
-					saveAs(canvas, 1);		//1 means when finish the operation, the system will be closed				
+					saveAs(canvas, graph, 1);		//1 means when finish the operation, the system will be closed				
 				}
 				else if(status) {
-					save(canvas);
+					save(canvas, graph, 1);
 				}
 				stage.close();
 			}
 		});
 	}
-	public void save(Canvas canvas) {
+	public void save(Canvas canvas,GraphicsContext graph, int q) {
 		if(!status)
-			saveAs(canvas, 0);
+			saveAs(canvas, graph, 0);
 		else {
 			try {
 				File file = new File(saveRoute);
 				WritableImage image = canvas.snapshot(new SnapshotParameters(), null);
 				ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+				if(q==1)
+					System.exit(0);
+				else if(q==2) {
+					graph.clearRect(0, 0, 10000, 10000);
+					status = false;
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
