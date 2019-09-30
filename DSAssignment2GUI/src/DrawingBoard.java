@@ -13,6 +13,7 @@ import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -27,23 +28,26 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeLineCap;
-import javafx.scene.shape.StrokeLineJoin;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 public class DrawingBoard extends Application{
 	private  boolean status = false;		//if status = false, the picture have not been saved yet. if status = true, the picture have been saved
 	private  String saveRoute;			//record the save route
-	private  double eraserSize = 20.0;	//record the eraser size
-	private  double fontSize = 20;		//record the text size
+	private  int eraserSize = 20;	//record the eraser size
+	private  int fontSize = 20;		//record the text size
+	private  int  lineWidth = 1;	//record the line width
+	private  static Paint color = Color.BLACK;		//record the present color 
 	private  int count = 0;			//used to control the sequence of text tool events
 
 	public static void main(String[] args) {
@@ -68,6 +72,7 @@ public class DrawingBoard extends Application{
 					public void handle(MouseEvent event) {
 						lineWidthShowing.setText(Double.toString((int)lineWidthSlider.getValue()));
 						graph.setLineWidth((int)lineWidthSlider.getValue());
+						lineWidth = (int)lineWidthSlider.getValue();
 					}
 				});
 			}
@@ -546,12 +551,216 @@ public class DrawingBoard extends Application{
 							else if(count == 1) {
 								textPane.getChildren().removeAll(text);
 								graph.setFont(Font.font(fontSize));
+								graph.setFill(color);
 								graph.fillText(text.getText(), x+fontSize*0.65, y+fontSize*1.33);
 								count = 2;
 								
 							}							
 					}
 				});
+			}
+		});	
+		
+//		Color Palette
+		Rectangle colorShowingRectangle = new Rectangle(30,30);
+		colorShowingRectangle.setFill(Color.BLACK);
+		VBox colorVBox = new VBox();
+		colorVBox.setPadding(new Insets(20.0));
+		colorVBox.getChildren().addAll(colorShowingRectangle);
+		
+		VBox colorVBox2 = new VBox(); 
+		
+		HBox colorPalettePane1 = new HBox();
+		colorPalettePane1.setSpacing(2.0);
+		colorPalettePane1.setPrefSize(180, 29);
+		Rectangle color1 = new Rectangle(28, 28);
+		color1.setFill(Color.valueOf("#FFFFFF"));
+		color1.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#FFFFFF"));
+                graph.setStroke(Color.valueOf("#FFFFFF"));
+                color = Color.valueOf("#FFFFFF");
+			}
+		});
+		Rectangle color2 = new Rectangle(28, 28);
+		color2.setFill(Color.valueOf("#FFFFE0"));
+		color2.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#FFFFE0"));
+                graph.setStroke(Color.valueOf("#FFFFE0"));
+                color = Color.valueOf("#FFFFE0");
+			}
+		});
+		Rectangle color3 = new Rectangle(28, 28);
+		color3.setFill(Color.valueOf("#FFFF00"));
+		color3.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#FFFF00"));
+                graph.setStroke(Color.valueOf("#FFFF00"));
+                color = Color.valueOf("#FFFF00");
+			}
+		});
+		Rectangle color4 = new Rectangle(28, 28);
+		color4.setFill(Color.valueOf("#FFA500"));
+		color4.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#FFA500"));
+                graph.setStroke(Color.valueOf("#FFA500"));
+                color = Color.valueOf("#FFA500");
+			}
+		});
+		Rectangle color5 = new Rectangle(28, 28);
+		color5.setFill(Color.valueOf("#FF69B4"));
+		color5.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#FF69B4"));
+                graph.setStroke(Color.valueOf("#FF69B4"));
+                color = Color.valueOf("#FF69B4");
+			}
+		});
+		Rectangle color6 = new Rectangle(28, 28);
+		color6.setFill(Color.valueOf("#FF0000"));
+		color6.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#FF0000"));
+                graph.setStroke(Color.valueOf("#FF0000"));
+                color = Color.valueOf("#FF0000");
+			}
+		});
+		
+		HBox colorPalettePane2 = new HBox();
+		colorPalettePane2.setSpacing(2.0);
+		colorPalettePane2.setPrefSize(180, 29);
+		Rectangle color7 = new Rectangle(28, 28);
+		color7.setFill(Color.valueOf("#BFEFFF"));
+		color7.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#BFEFFF"));
+                graph.setStroke(Color.valueOf("#BFEFFF"));
+                color = Color.valueOf("#BFEFFF");
+			}
+		});
+		Rectangle color8 = new Rectangle(28, 28);
+		color8.setFill(Color.valueOf("#4169E1"));
+		color8.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#4169E1"));
+                graph.setStroke(Color.valueOf("#4169E1"));
+                color = Color.valueOf("#4169E1");
+			}
+		});
+		Rectangle color9 = new Rectangle(28, 28);
+		color9.setFill(Color.valueOf("#9400D3"));
+		color9.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#9400D3"));
+                graph.setStroke(Color.valueOf("#9400D3"));
+                color = Color.valueOf("#9400D3");
+			}
+		});
+		Rectangle color10 = new Rectangle(28, 28);
+		color10.setFill(Color.valueOf("#191970"));
+		color10.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#191970"));
+                graph.setStroke(Color.valueOf("#191970"));
+                color = Color.valueOf("#191970");
+			}
+		});
+		Rectangle color11 = new Rectangle(28, 28);
+		color11.setFill(Color.valueOf("#8B1A1A"));
+		color11.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#8B1A1A"));
+                graph.setStroke(Color.valueOf("#8B1A1A"));
+                color = Color.valueOf("#8B1A1A");
+			}
+		});
+		Rectangle color12 = new Rectangle(28, 28);
+		color12.setFill(Color.valueOf("#000000"));
+		color12.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#000000"));
+                graph.setStroke(Color.valueOf("#000000"));
+                color = Color.valueOf("#000000");
+			}
+		});
+		
+		HBox colorPalettePane3 = new HBox();
+		colorPalettePane3.setSpacing(2.0);
+		colorPalettePane3.setPrefSize(190, 29);
+		Rectangle color13 = new Rectangle(28, 28);
+		color13.setFill(Color.valueOf("#7FFFD4"));
+		color13.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#7FFFD4"));
+                graph.setStroke(Color.valueOf("#7FFFD4"));
+                color = Color.valueOf("#7FFFD4");
+			}
+		});
+		Rectangle color14 = new Rectangle(28, 28);
+		color14.setFill(Color.valueOf("#7CFC00"));
+		color14.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#7CFC00"));
+                graph.setStroke(Color.valueOf("#7CFC00"));
+                color = Color.valueOf("#7CFC00");
+			}
+		});
+		Rectangle color15 = new Rectangle(28, 28);
+		color15.setFill(Color.valueOf("#6E8B3D"));
+		color15.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#6E8B3D"));
+                graph.setStroke(Color.valueOf("#6E8B3D"));
+                color = Color.valueOf("#6E8B3D");
+			}
+		});
+		Rectangle color16 = new Rectangle(28, 28);
+		color16.setFill(Color.valueOf("#388E8E"));
+		color16.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#388E8E"));
+                graph.setStroke(Color.valueOf("#388E8E"));
+                color = Color.valueOf("#388E8E");
+			}
+		});
+		Rectangle color17 = new Rectangle(28, 28);
+		color17.setFill(Color.valueOf("#006400"));
+		color17.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#006400"));
+                graph.setStroke(Color.valueOf("#006400"));
+                color = Color.valueOf("#006400");
+			}
+		});
+		Rectangle color18 = new Rectangle(28, 28);
+		color18.setFill(Color.valueOf("#00688B"));
+		color18.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent event) {
+				colorShowingRectangle.setFill(Color.valueOf("#00688B"));
+                graph.setStroke(Color.valueOf("#00688B"));
+                color = Color.valueOf("#00688B");
+			}
+		});
+			
+		colorPalettePane1.getChildren().addAll(color1, color2, color3, color4, color5, color6);
+		colorPalettePane2.getChildren().addAll(color7, color8, color9, color10, color11, color12);
+		colorPalettePane3.getChildren().addAll(color13, color14, color15, color16, color17, color18);
+		colorVBox2.getChildren().addAll(colorPalettePane1, colorPalettePane2, colorPalettePane3);				
+		
+//		Color Picker
+		Tooltip tip7 = new Tooltip("Color Picker");
+		tip7.setFont(Font.font(15));	
+		Button ColorPickerButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("colorPicker.png"))));
+		ColorPickerButton.setFont(Font.font(26));
+		ColorPickerButton.setTooltip(tip6);
+		ColorPickerButton.setPrefHeight(55);
+		ColorPickerButton.setPrefWidth(55);
+		ColorPickerButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			
+			public void handle(MouseEvent event) {
+				colorPicker(canvas, graph, colorShowingRectangle);
 			}
 		});
 		
@@ -564,7 +773,7 @@ public class DrawingBoard extends Application{
 		toolBox.setPadding(new Insets(5.0));
 		toolBox.setSpacing(5);					//space between tools
 		toolBox.setAlignment(Pos.TOP_LEFT);		//all the tools are top-left
-		toolBox.getChildren().addAll(randomLineButton, lineButton, rectangleButton, roundButton, eraserButton, textButton, separateLine1, slider, separateLine2);			//add all the tool buttons here
+		toolBox.getChildren().addAll(randomLineButton, lineButton, rectangleButton, roundButton, eraserButton, textButton, separateLine1, slider, separateLine2, colorVBox, colorVBox2, ColorPickerButton);			//add all the tool buttons here
 //		the label on the right		
 		Label label1 = new Label("		    Members list");
 		Label label2 = new Label("		       Dialogue");
@@ -599,15 +808,6 @@ public class DrawingBoard extends Application{
 		windowPane.getChildren().addAll(label1, messageWindow, label2, communicationWindow, inputWinBox);
 		windowPane.setPadding(new Insets(5.0));
 		windowPane.setSpacing(5.0);
-//		Rectangle frame = new Rectangle();
-//		frame.setX(0);
-//		frame.setY(0);
-//		frame.setWidth(250);
-//		frame.setHeight(400);
-//		frame.setStroke(Color.LAVENDER);
-//		frame.setStrokeWidth(10);
-//		windowPane.getChildren().addAll(frame);	
-		
 
 		aPane.setStyle("-fx-background-color:#FFFFFF;");	//white color board	
 		aPane.getChildren().addAll(canvas, textPane);					//children of aPane
@@ -635,9 +835,9 @@ public class DrawingBoard extends Application{
 		Stage stage = new Stage();
 		stage.setScene(scene);
 		stage.setHeight(900);
-		stage.setWidth(1500);
+		stage.setWidth(1300);
 		stage.setMinHeight(500);
-		stage.setMinWidth(800);
+		stage.setMinWidth(1100);
 		stage.setTitle("IG Drawing Board");
 		stage.show();
 		
@@ -912,5 +1112,35 @@ public class DrawingBoard extends Application{
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public void colorPicker(Canvas canvas, GraphicsContext graph, Rectangle rectangle) {
+		Stage stage = new Stage();
+		final ColorPicker colorPicker = new ColorPicker();
+        colorPicker.setValue((Color) rectangle.getFill());
+ 
+        final Circle circle = new Circle(50);
+        circle.setFill(colorPicker.getValue());
+ 
+        colorPicker.setOnAction(new EventHandler<ActionEvent>() {
+ 
+            public void handle(ActionEvent event) {
+                circle.setFill(colorPicker.getValue());
+                rectangle.setFill(colorPicker.getValue());
+                graph.setStroke(colorPicker.getValue());
+                color = colorPicker.getValue();
+            }
+        });
+ 
+        FlowPane root = new FlowPane();
+        root.setPadding(new Insets(10));
+        root.setHgap(10);
+        root.getChildren().addAll(circle, colorPicker);
+ 
+        Scene scene = new Scene(root, 400, 300);
+ 
+        stage.setTitle("Customize the Color");
+        stage.setScene(scene);
+        stage.show();
 	}
 }
