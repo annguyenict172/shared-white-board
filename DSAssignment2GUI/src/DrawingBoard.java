@@ -197,7 +197,7 @@ public class DrawingBoard extends Application{
 		});
 		
 		
-//		random line part
+//		random line part (message transfer)!!!
 		Tooltip tip1 = new Tooltip("Random line tool");
 		tip1.setFont(Font.font(15));	
 		Button randomLineButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("randomLine.png"))));
@@ -235,7 +235,7 @@ public class DrawingBoard extends Application{
 			}
 		});
 		
-//		Line part
+//		Line part(message transfer)!!!
 		Tooltip tip2 = new Tooltip("Line tool");
 		tip2.setFont(Font.font(15));		
 		Button lineButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("straightLine.png"))));
@@ -277,7 +277,7 @@ public class DrawingBoard extends Application{
 			}
 		});
 		
-// 		rec tool
+// 		rec tool(message transfer)!!!
 		Tooltip tip3 = new Tooltip("Rectangle tool");
 		tip3.setFont(Font.font(15));	
 		Button rectangleButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("rectangle.png"))));
@@ -343,7 +343,7 @@ public class DrawingBoard extends Application{
 		});
 		
 		
-// 		oval tool
+// 		oval tool(message transfer)!!!
 		Tooltip tip4 = new Tooltip("Oval tool. Draw circle when pressing Ctrl.");
 		tip4.setFont(Font.font(15));	
 		Button roundButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("oval.png"))));
@@ -480,7 +480,7 @@ public class DrawingBoard extends Application{
 			}
 		});	
 
-// 		eraser tool
+// 		eraser tool(message transfer)!!!
 		Tooltip tip5 = new Tooltip("Eraser tool");
 		tip5.setFont(Font.font(15));	
 		Button eraserButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("rubber.png"))));
@@ -518,7 +518,7 @@ public class DrawingBoard extends Application{
 			}
 		});
 		
-//		text tool
+//		text tool(message transfer)!!!
 		Tooltip tip6 = new Tooltip("Text tool");
 		tip6.setFont(Font.font(15));	
 		Button textButton = new Button("A");
@@ -553,8 +553,7 @@ public class DrawingBoard extends Application{
 								graph.setFont(Font.font(fontSize));
 								graph.setFill(color);
 								graph.fillText(text.getText(), x+fontSize*0.65, y+fontSize*1.33);
-								count = 2;
-								
+								count = 2;							
 							}							
 					}
 				});
@@ -786,17 +785,34 @@ public class DrawingBoard extends Application{
 		inputWindow.setPrefSize(240, 70);
 		inputWindow.setPromptText("Input text here");
 		inputWindow.setFocusTraversable(false);		
-		communicationWindow.setPrefHeight(420);
+		communicationWindow.setPrefHeight(300);
 		Button inputButton = new Button("<-");
 		inputButton.setPrefSize(70, 70);
 		HBox inputWinBox = new HBox();
 		inputWinBox.setSpacing(5);
 		inputWinBox.getChildren().addAll(inputWindow, inputButton);		//the input window and input button
 		
-// 		input part
+// 		input part(message transfer)!!!
 		inputButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
 			public void handle(MouseEvent event) {
 				communicationWindow.appendText(inputWindow.getText() + "\r\n");
+			}
+		});
+
+//		kickWindow
+		TextField kickWindow = new TextField();
+		kickWindow.setPrefSize(240, 70);
+		kickWindow.setPromptText("Kick user");
+		kickWindow.setFocusTraversable(false);	
+		
+//		kick button(message transfer)!!!
+		Button kickButton = new Button("Kick");
+		kickButton.setPrefSize(100, 30);		
+		kickButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
+			public void handle(MouseEvent arg0) {
+				String memberKicked = kickWindow.getText();			//get the name of member that should be kicked out
+				kickWindow.clear();
+				//the operation to kick the member should be added here
 			}
 		});
 		
@@ -805,7 +821,7 @@ public class DrawingBoard extends Application{
 		VBox windowPane = new VBox();
 		windowPane.setPrefWidth(280);
 		windowPane.setStyle("-fx-background-color:#ADD8E6;");	
-		windowPane.getChildren().addAll(label1, messageWindow, label2, communicationWindow, inputWinBox);
+		windowPane.getChildren().addAll(label1, messageWindow, kickWindow, kickButton, label2, communicationWindow, inputWinBox);
 		windowPane.setPadding(new Insets(5.0));
 		windowPane.setSpacing(5.0);
 
@@ -841,8 +857,6 @@ public class DrawingBoard extends Application{
 		stage.setTitle("IG Drawing Board");
 		stage.show();
 		
-//		String rootPath = getClass().getResource("/").getFile().toString();
-//		System.out.println(rootPath);
 	
 		stage.getIcons().add(new Image(getClass().getResourceAsStream("download.jpg")));		//set the icon of this app
 
