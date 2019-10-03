@@ -1,3 +1,5 @@
+package whiteboard;
+
 import java.io.*;
 import javax.imageio.ImageIO;
 import javafx.application.Application;
