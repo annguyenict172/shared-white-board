@@ -1,7 +1,10 @@
 package whiteboard;
 
 import java.io.*;
+import java.rmi.RemoteException;
+
 import javax.imageio.ImageIO;
+
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -51,12 +54,23 @@ public class DrawingBoard extends Application{
 	private  int  lineWidth = 1;	//record the line width
 	private  static Paint color = Color.BLACK;		//record the present color 
 	private  int count = 0;			//used to control the sequence of text tool events
+	private  DrawingBoardService dbService;
+	private	 TextArea communicationWindow;
 
 	public static void main(String[] args) {
 		launch(args);
 	}
+	
+	public void notify(String tag, Object data, String src) {
+		System.out.println(tag + " " + data + " " + src);
+		if (tag.compareTo("new_message") == 0) {
+			communicationWindow.appendText(src + ": " + (String) data + "\r\n");
+		}
+	}
 
 	public void start(Stage primaryStage) throws Exception {
+		dbService = new DrawingBoardService("localhost", 1357, "WhiteBoard", this);
+		
 		AnchorPane root = new AnchorPane();
 		AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
 		AnchorPane textPane = new AnchorPane();				//used to show the text label and shape moving tracks
@@ -781,7 +795,7 @@ public class DrawingBoard extends Application{
 		
 //		the windows on the right
 		TextArea messageWindow = new TextArea();
-		TextArea communicationWindow = new TextArea();
+		communicationWindow = new TextArea();
 		TextArea inputWindow = new TextArea();
 		communicationWindow.setWrapText(true);		//line break
 		inputWindow.setPrefSize(240, 70);
@@ -797,7 +811,11 @@ public class DrawingBoard extends Application{
 // 		input part(message transfer)!!!
 		inputButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
 			public void handle(MouseEvent event) {
-				communicationWindow.appendText(inputWindow.getText() + "\r\n");
+				try {
+					dbService.broadcast("new_message", inputWindow.getText());
+				} catch (Exception e) {
+					System.err.println("Error communicating with server: " + e);
+				}
 			}
 		});
 
