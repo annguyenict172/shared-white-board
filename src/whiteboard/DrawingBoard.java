@@ -71,6 +71,82 @@ public class DrawingBoard extends Application{
 		launch(args);
 	}
 	
+	//login part
+	public void start(Stage primaryStage) throws Exception {
+		VBox vBox = new VBox();
+		HBox hBox = new HBox();
+		Label usernameLabel = new Label("Username");
+		Label drawingidLabel = new Label("Drawing ID");
+		TextField usernameField = new TextField();
+		TextField drawingidField = new TextField();
+		Button createButton = new Button("Create");
+		Button joinButton = new Button("Join");
+		Label statusLabel = new Label();
+		Stage stage = new Stage();
+		Scene scene = new Scene(vBox);
+		
+		createButton.setOnMouseClicked(new EventHandler<MouseEvent>() {		//create the board
+
+			public void handle(MouseEvent event) {
+				try {
+					if(!usernameField.getText().equals("")) {  		//if username has been input
+						String username = usernameField.getText();		//This is the username.the name should be delivered to other modules!!
+						board();
+						stage.close();
+					}
+					else {
+						statusLabel.setText("Please input an username");
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		joinButton.setOnMouseClicked(new EventHandler<MouseEvent>() {		//join a board
+
+			public void handle(MouseEvent event) {
+				try {
+					if(!usernameField.getText().equals("") && !drawingidField.getText().equals("")) {
+						String username = usernameField.getText();		//This is the username.the name should be delivered to other modules!!
+						String drawingid = drawingidField.getText();		//This is the drawingid.the id should be delivered to other modules!!
+						statusLabel.setText("Waiting for the acceptance......");
+						//the codes here should check the drawingid 
+						
+					}
+					else {
+						statusLabel.setText("Please input the username and drawing ID. ");
+					}
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+		
+		
+		
+		usernameField.setPrefWidth(200);
+		usernameField.setPromptText("Please input username here.");
+		usernameField.setFocusTraversable(false);
+		drawingidField.setPrefWidth(200);
+		drawingidField.setPromptText("Please input drawing id here.");
+		drawingidField.setFocusTraversable(false);
+		createButton.setPrefWidth(100);
+		joinButton.setPrefWidth(100);
+		hBox.setSpacing(120);
+		vBox.setSpacing(15.0);
+		vBox.setPadding(new Insets(30));
+		hBox.getChildren().addAll(createButton, joinButton);
+		vBox.getChildren().addAll(usernameLabel, usernameField, drawingidLabel, drawingidField, hBox, statusLabel);
+		stage.setScene(scene);
+		stage.setHeight(350);
+		stage.setWidth(400);
+		stage.setTitle("IG Drawing Board login");
+		stage.show();
+		stage.getIcons().add(new Image(getClass().getResourceAsStream("download.jpg")));		//set the icon of this app
+	}
+	
 	public void notify(String tag, Object data, String src) {
 		System.out.println(tag + " " + data + " " + src);
 		if (tag.compareTo(MessageTag.CHAT) == 0) {
@@ -84,9 +160,9 @@ public class DrawingBoard extends Application{
 	public void notifyError(String error) {
 		System.err.println(error);
 	}
-
-	public void start(Stage primaryStage) throws Exception {
-
+	
+//  the drawning board gui
+	public void board() throws Exception {
 		List<String> args = getParameters().getRaw();
 		String hostName = args.get(0);
 		int port = Integer.parseInt(args.get(1));
