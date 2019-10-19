@@ -104,7 +104,7 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		synchronized (drawingClients) {
 			drawingClients.put(drawingId, clients);
 		}
-		broadcast(null, drawingId, "remove_member", username);
+		broadcast(null, drawingId, MessageTag.REMOVE_MEMBER, username);
 	}
 	
 	public boolean isManager(String username, String drawingId) throws ServerError, RemoteException {

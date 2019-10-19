@@ -854,6 +854,7 @@ public class DrawingBoard extends Application{
 		kickButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
 			public void handle(MouseEvent arg0) {
 				String memberKicked = kickWindow.getText();			//get the name of member that should be kicked out
+				dbService.removeMember(memberKicked);
 				kickWindow.clear();
 				//the operation to kick the member should be added here
 			}
