@@ -2,6 +2,7 @@ package whiteboard;
 
 import java.io.*;
 import java.rmi.RemoteException;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -69,7 +70,10 @@ public class DrawingBoard extends Application{
 	}
 
 	public void start(Stage primaryStage) throws Exception {
-		dbService = new DrawingBoardService("localhost", 1357, "WhiteBoard", this);
+		List<String> args = getParameters().getRaw();
+		String hostName = args.get(0);
+		int port = Integer.parseInt(args.get(1));
+		dbService = new DrawingBoardService(hostName, port, "WhiteBoard", this);
 		
 		AnchorPane root = new AnchorPane();
 		AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
@@ -769,7 +773,7 @@ public class DrawingBoard extends Application{
 		tip7.setFont(Font.font(15));	
 		Button ColorPickerButton = new Button("", new ImageView(new Image(getClass().getResourceAsStream("colorPicker.png"))));
 		ColorPickerButton.setFont(Font.font(26));
-		ColorPickerButton.setTooltip(tip6);
+		ColorPickerButton.setTooltip(tip7);
 		ColorPickerButton.setPrefHeight(55);
 		ColorPickerButton.setPrefWidth(55);
 		ColorPickerButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
