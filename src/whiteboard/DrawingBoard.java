@@ -7,6 +7,7 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.embed.swing.SwingFXUtils;
@@ -73,6 +74,12 @@ public class DrawingBoard extends Application{
 	
 	//login part
 	public void start(Stage primaryStage) throws Exception {
+		List<String> args = getParameters().getRaw();
+		String hostName = args.get(0);
+		int port = Integer.parseInt(args.get(1));
+		
+		dbService = new DrawingBoardService(hostName, port, "WhiteBoard", this);
+		
 		VBox vBox = new VBox();
 		HBox hBox = new HBox();
 		Label usernameLabel = new Label("Username");
@@ -91,6 +98,8 @@ public class DrawingBoard extends Application{
 				try {
 					if(!usernameField.getText().equals("")) {  		//if username has been input
 						String username = usernameField.getText();		//This is the username.the name should be delivered to other modules!!
+						dbService.username = username;
+						dbService.createDrawing();
 						board();
 						stage.close();
 					}
@@ -112,6 +121,8 @@ public class DrawingBoard extends Application{
 						String drawingid = drawingidField.getText();		//This is the drawingid.the id should be delivered to other modules!!
 						statusLabel.setText("Waiting for the acceptance......");
 						//the codes here should check the drawingid 
+						dbService.username = username;
+						dbService.joinDrawing(drawingid);
 						
 					}
 					else {
@@ -144,7 +155,7 @@ public class DrawingBoard extends Application{
 		stage.setWidth(400);
 		stage.setTitle("IG Drawing Board login");
 		stage.show();
-		stage.getIcons().add(new Image(getClass().getResourceAsStream("download.jpg")));		//set the icon of this app
+//		stage.getIcons().add(new Image(getClass().getResourceAsStream("download.jpg")));		//set the icon of this app
 	}
 	
 	public void notify(String tag, Object data, String src) {
@@ -153,6 +164,18 @@ public class DrawingBoard extends Application{
 			communicationWindow.appendText(src + ": " + (String) data + "\r\n");
 		} else if (tag.compareTo(MessageTag.ASK_TO_JOIN) == 0) {
 			dbService.addToDrawing(src, (RMIDrawingClient) data); 
+		} else if (tag.compareTo(MessageTag.MANAGER_APPROVED) == 0) {
+			Platform.runLater(new Runnable() {
+                 @Override public void run() {
+                	 try {
+                		 board();
+                	 } catch (Exception e) {
+         				System.err.println("Cannot open drawing application");
+        				e.printStackTrace();
+        			 }
+          
+                 }
+             });
 		}
 		
 	}
@@ -163,18 +186,6 @@ public class DrawingBoard extends Application{
 	
 //  the drawning board gui
 	public void board() throws Exception {
-		List<String> args = getParameters().getRaw();
-		String hostName = args.get(0);
-		int port = Integer.parseInt(args.get(1));
-		String drawingId = args.get(2);
-		
-		dbService = new DrawingBoardService(hostName, port, "WhiteBoard", this);
-		if (drawingId.compareTo("None") != 0) {
-			dbService.joinDrawing(drawingId);
-		} else {
-			dbService.createDrawing();
-		}
-		
 		AnchorPane root = new AnchorPane();
 		AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
 		AnchorPane textPane = new AnchorPane();				//used to show the text label and shape moving tracks

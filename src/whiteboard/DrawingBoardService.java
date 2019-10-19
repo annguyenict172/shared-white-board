@@ -10,7 +10,7 @@ import java.util.UUID;
 
 
 public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawingClient {
-	public String username = UUID.randomUUID().toString();
+	public String username;
 	public String drawingId;
 	private String drawingKey;
 	
