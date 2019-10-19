@@ -56,7 +56,16 @@ public class DrawingBoard extends Application{
 	private  static Paint color = Color.BLACK;		//record the present color 
 	private  int count = 0;			//used to control the sequence of text tool events
 	private  DrawingBoardService dbService;
-	private	 TextArea communicationWindow;
+	
+	private AnchorPane root = new AnchorPane();
+	private AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
+	private Canvas canvas = new Canvas(1245, 775);				// the canvas, all the shapes are drown on it
+	private GraphicsContext graph = canvas.getGraphicsContext2D();	//the pen used to draw
+	private AnchorPane textPane = new AnchorPane();				//used to show the text label and shape moving tracks
+	private TextArea memberWindow = new TextArea();				//show the member list and some other information
+	private TextField kickWindow = new TextField();				//kick window, input the name of the member that should be kicked out
+	private	 TextArea communicationWindow = new TextArea();		//dialogue window
+	private TextArea inputWindow = new TextArea();				//input window
 
 	public static void main(String[] args) {
 		launch(args);
@@ -70,6 +79,7 @@ public class DrawingBoard extends Application{
 	}
 
 	public void start(Stage primaryStage) throws Exception {
+
 		List<String> args = getParameters().getRaw();
 		String hostName = args.get(0);
 		int port = Integer.parseInt(args.get(1));
@@ -81,7 +91,6 @@ public class DrawingBoard extends Application{
 		Canvas canvas = new Canvas(1245, 775);
 		GraphicsContext graph = canvas.getGraphicsContext2D();
 		graph.setLineCap(StrokeLineCap.ROUND);
-		
 //		used to set the width of line 
 		Slider lineWidthSlider = new Slider(1, 30, 1);	
 		Label lineWidthShowing = new Label();
@@ -798,9 +807,6 @@ public class DrawingBoard extends Application{
 		Label label2 = new Label("		       Dialogue");
 		
 //		the windows on the right
-		TextArea messageWindow = new TextArea();
-		communicationWindow = new TextArea();
-		TextArea inputWindow = new TextArea();
 		communicationWindow.setWrapText(true);		//line break
 		inputWindow.setPrefSize(240, 70);
 		inputWindow.setPromptText("Input text here");
@@ -824,7 +830,6 @@ public class DrawingBoard extends Application{
 		});
 
 //		kickWindow
-		TextField kickWindow = new TextField();
 		kickWindow.setPrefSize(240, 70);
 		kickWindow.setPromptText("Kick user");
 		kickWindow.setFocusTraversable(false);	
@@ -845,7 +850,7 @@ public class DrawingBoard extends Application{
 		VBox windowPane = new VBox();
 		windowPane.setPrefWidth(280);
 		windowPane.setStyle("-fx-background-color:#ADD8E6;");	
-		windowPane.getChildren().addAll(label1, messageWindow, kickWindow, kickButton, label2, communicationWindow, inputWinBox);
+		windowPane.getChildren().addAll(label1, memberWindow, kickWindow, kickButton, label2, communicationWindow, inputWinBox);
 		windowPane.setPadding(new Insets(5.0));
 		windowPane.setSpacing(5.0);
 
