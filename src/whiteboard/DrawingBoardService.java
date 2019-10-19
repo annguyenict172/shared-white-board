@@ -1,66 +1,96 @@
 package whiteboard;
 
 import java.io.IOException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.registry.*;
+import java.util.Hashtable;
 import java.util.UUID;
 
 
-public class DrawingBoardService extends UnicastRemoteObject implements RMIClient {
-	private String username = UUID.randomUUID().toString();
-	private RMIServer server;
+public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawingClient {
+	public String username = UUID.randomUUID().toString();
+	public String drawingId;
+	private String drawingKey;
+	
+	private RMIDrawingServer server;
 	private DrawingBoard drawingBoard;
 	
-	public DrawingBoardService(String hostname, int port, String serverName, DrawingBoard drawingBoard) throws RemoteException {
+	public DrawingBoardService(String hostname, int port, String serverName, DrawingBoard drawingBoard) throws RemoteException, NotBoundException {
 		super();
 		this.drawingBoard = drawingBoard;
-		try {
-			System.out.println("Connecting to server...");
-			boolean connected = connect(hostname, port, serverName);
-			if (!connected) {
-				System.err.println("Cannot connect to server");
-			}
-		} catch (Exception e) {
-			System.err.println("Error when connecting to server: " + e);
-		}
-		
+		Registry registry = LocateRegistry.getRegistry(hostname, port);
+		server = (RMIDrawingServer) registry.lookup(serverName);
 	}
 	
-	public String getUsername() throws RemoteException {
-		return this.username;
-	}
-	
-	public boolean connect(String host, int port, String serverName) throws IOException, RemoteException {
-		Registry registry = LocateRegistry.getRegistry(host, port);
+	public void createDrawing() {
 		try {
-			server = (RMIServer) registry.lookup(serverName);
-			boolean available = server.checkUsernameAvailability("anthailan");
-			if (!available) {
-				System.err.println("This username has been taken");
-				return false;
-			}
-			server.register(getUsername(), this);
-			return true;
-		} catch (Exception e) {
-			System.err.println(e);
-			return false;
+			Hashtable<String, String> drawingInfo = server.createDrawing(this.username, this);
+			drawingId = drawingInfo.get("drawingId");
+			drawingKey = drawingInfo.get("drawingKey");
+			System.out.println("Drawing ID: " + drawingId);
+			System.out.println("Drawing Key: " + drawingKey);
+		} catch (RemoteException e) {
+			drawingBoard.notifyError("Cannot connect to server");
+		} catch (ServerError e) {
+			drawingBoard.notifyError(e.getMessage());
 		}
 	}
 	
-	public boolean send(String tag, Object data, String dst) throws IOException, RemoteException {
-		server.send(dst, this.getUsername(), tag, data);
-		return true;
+	public void joinDrawing(String drawingId) {
+		try {
+			server.joinDrawing(this.username, drawingId, this);
+			this.drawingId = drawingId;
+		} catch (RemoteException e) {
+			drawingBoard.notifyError("Cannot connect to server");
+		} catch (ServerError e) {
+			drawingBoard.notifyError(e.getMessage());
+		}
 	}
 	
-	public boolean broadcast(String tag, Object data) throws IOException, RemoteException {
-		server.broadcast(this.getUsername(), tag, data);
-		return true;
+	public void send(String tag, Object data, String dst) {
+		try {
+			server.send(dst, this.username, this.drawingId, tag, data);
+		} catch (RemoteException e) {
+			drawingBoard.notifyError("Cannot connect to server");
+		} catch (ServerError e) {
+			drawingBoard.notifyError(e.getMessage());
+		}
 	}
 	
-	public boolean notify(String tag, Object data, String src) throws IOException, RemoteException {
+	public void broadcast(String tag, Object data) {
+		try {
+			server.broadcast(this.username, this.drawingId, tag, data);
+		} catch (RemoteException e) {
+			drawingBoard.notifyError("Cannot connect to server");
+		} catch (ServerError e) {
+			drawingBoard.notifyError(e.getMessage());
+		}
+	}
+	
+	public void addToDrawing(String username, RMIDrawingClient client) {
+		try {
+			server.addToDrawing(username, this.drawingId, this.drawingKey, client);
+		} catch (RemoteException e) {
+			drawingBoard.notifyError("Cannot connect to server");
+		} catch (ServerError e) {
+			drawingBoard.notifyError(e.getMessage());
+		}
+	}
+	
+	public void declineFromDrawing(RMIDrawingClient client) {
+		try {
+			server.declineFromDrawing(this.drawingKey, client);
+		} catch (RemoteException e) {
+			drawingBoard.notifyError("Cannot connect to server");
+		} catch (ServerError e) {
+			drawingBoard.notifyError(e.getMessage());
+		}
+	}
+	
+	public void notify(String tag, Object data, String src) throws RemoteException {
 		drawingBoard.notify(tag, data, src);
-		return true;
 	}
 }
 

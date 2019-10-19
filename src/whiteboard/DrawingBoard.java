@@ -73,9 +73,16 @@ public class DrawingBoard extends Application{
 	
 	public void notify(String tag, Object data, String src) {
 		System.out.println(tag + " " + data + " " + src);
-		if (tag.compareTo("new_message") == 0) {
+		if (tag.compareTo(MessageTag.CHAT) == 0) {
 			communicationWindow.appendText(src + ": " + (String) data + "\r\n");
+		} else if (tag.compareTo(MessageTag.ASK_TO_JOIN) == 0) {
+			dbService.addToDrawing(src, (RMIDrawingClient) data); 
 		}
+		
+	}
+	
+	public void notifyError(String error) {
+		System.err.println(error);
 	}
 
 	public void start(Stage primaryStage) throws Exception {
@@ -83,7 +90,14 @@ public class DrawingBoard extends Application{
 		List<String> args = getParameters().getRaw();
 		String hostName = args.get(0);
 		int port = Integer.parseInt(args.get(1));
+		String drawingId = args.get(2);
+		
 		dbService = new DrawingBoardService(hostName, port, "WhiteBoard", this);
+		if (drawingId.compareTo("None") != 0) {
+			dbService.joinDrawing(drawingId);
+		} else {
+			dbService.createDrawing();
+		}
 		
 		AnchorPane root = new AnchorPane();
 		AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
@@ -822,7 +836,7 @@ public class DrawingBoard extends Application{
 		inputButton.setOnMouseClicked(new EventHandler<MouseEvent>() {
 			public void handle(MouseEvent event) {
 				try {
-					dbService.broadcast("new_message", inputWindow.getText());
+					dbService.broadcast(MessageTag.CHAT, inputWindow.getText());
 				} catch (Exception e) {
 					System.err.println("Error communicating with server: " + e);
 				}

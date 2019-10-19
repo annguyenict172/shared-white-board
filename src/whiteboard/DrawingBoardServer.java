@@ -7,44 +7,119 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
+import java.util.UUID;
 
 
-public class DrawingBoardServer extends UnicastRemoteObject implements RMIServer {
-	Hashtable<String, RMIClient> clients;
+public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawingServer {
+	Hashtable<String, Hashtable<String, RMIDrawingClient>> drawingClients;
+	Hashtable<String, String> drawingManagers;
+	Hashtable<String, String> drawingKeys;
+	Hashtable<String, Vector<String>> drawingChats;
+	Hashtable<String, Vector<String>> drawingInstructions;
 	
 	public DrawingBoardServer() throws RemoteException {
 		super();
-		clients = new Hashtable<String, RMIClient>();
+		drawingClients = new Hashtable<String, Hashtable<String, RMIDrawingClient>>();
+		drawingManagers = new Hashtable<String, String>();
+		drawingKeys = new Hashtable<String, String>();
+		drawingChats = new Hashtable<String, Vector<String>>();
+		drawingInstructions = new Hashtable<String, Vector<String>>();
 	}
 	
-	public boolean register(String username, RMIClient client) throws IOException, RemoteException {
-		System.out.println(clients.get(username));
-		if (clients.get(username) != null) {
-			return false;
+	public Hashtable<String, String> createDrawing(String username, RMIDrawingClient client) throws ServerError, RemoteException {
+		String drawingId = UUID.randomUUID().toString();
+		String drawingKey = UUID.randomUUID().toString();
+		Hashtable<String, RMIDrawingClient> clients = new Hashtable<String, RMIDrawingClient>();
+		clients.put(username, client);
+		
+		// Update all lookup table
+		synchronized (drawingClients) {
+			drawingClients.put(drawingId, clients);
 		}
-		synchronized (clients) {
-			clients.put(username, client);
+		synchronized (drawingManagers) {
+			drawingManagers.put(drawingId, username);
 		}
-		broadcast(null, "new_member", username);
-		return true;
+		synchronized (drawingKeys) {
+			drawingKeys.put(drawingId, drawingKey);
+		}
+		
+		// Send the info back to the manager
+		Hashtable<String, String> drawingInfo = new Hashtable<String, String>();
+		drawingInfo.put("drawingId", drawingId);
+		drawingInfo.put("drawingKey", drawingKey);
+		
+		return drawingInfo;
 	}
 	
-	public boolean checkUsernameAvailability(String username) throws RemoteException {
-		return clients.get(username) == null;
-	}
+	public void joinDrawing(String username, String drawingId, RMIDrawingClient client) throws ServerError, RemoteException {
+		Hashtable<String, RMIDrawingClient> clients = drawingClients.get(drawingId);
+		String manager = drawingManagers.get(drawingId);
+		
+		if (clients == null) {
+			throw new ServerError("Drawing does not exist.");
+		}
 
-	public boolean removeMember(String username) throws IOException, RemoteException { 
+		send(manager, username, drawingId, MessageTag.ASK_TO_JOIN, client);
+	}
+	
+	public void addToDrawing(String username, String drawingId, String managerKey, RMIDrawingClient client) throws ServerError, RemoteException {
+		Hashtable<String, RMIDrawingClient> clients = drawingClients.get(drawingId);
+		
+		if (clients == null) {
+			throw new ServerError("Drawing does not exist.");
+		}
+		
+		String key = drawingKeys.get(drawingId);
+		if (key.compareTo(managerKey) != 0) {
+			System.out.println("Real key: " + key);
+			System.out.println("Received key: " + managerKey);
+			throw new ServerError("You are not the manager.");
+		}
+		
+		clients.put(username, client);
+		System.out.println("Add client " + username + " successfully!");
+		
+		synchronized (drawingClients) {
+			drawingClients.put(drawingId, clients);
+		}
+		
+		send(username, null, drawingId, MessageTag.MANAGER_APPROVED, null);
+		broadcast(null, drawingId, MessageTag.NEW_MEMBER, username);
+	}
+	
+	public void declineFromDrawing(String managerKey, RMIDrawingClient client) throws ServerError, RemoteException {
+		client.notify(MessageTag.MANAGER_DECLINED, null, null);
+	}
+	
+	public void removeMember(String username, String drawingId, String managerKey) throws ServerError, RemoteException {
+		Hashtable<String, RMIDrawingClient> clients = drawingClients.get(drawingId);
+		if (clients == null) {
+			throw new ServerError("Drawing does not exist.");
+		}
 		if (clients.get(username) == null) {
+			throw new ServerError("User does not exist.");
+		}
+
+		clients.remove(username);
+		synchronized (drawingClients) {
+			drawingClients.put(drawingId, clients);
+		}
+		broadcast(null, drawingId, "remove_member", username);
+	}
+	
+	public boolean isManager(String username, String drawingId) throws ServerError, RemoteException {
+		String manager = drawingManagers.get(drawingId);
+		if (manager != username) {
 			return false;
 		}
-		synchronized (clients) {
-			clients.remove(username);
-		}
-		broadcast(null, "remove_member", username);
 		return true;
 	}
 	
-	public Vector<String> getMembers() throws RemoteException {
+	public Vector<String> getMembers(String drawingId) throws ServerError, RemoteException {
+		Hashtable<String, RMIDrawingClient> clients = drawingClients.get(drawingId);
+		if (clients == null) {
+			return null;
+		}
 		Vector<String> members = new Vector<String>();
 		Enumeration names = clients.keys();
 		while (names.hasMoreElements()) {
@@ -54,23 +129,23 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIServer
 		return members;
 	}
 	
-	public boolean send(String to, String from, String mtag, Object data) throws IOException, RemoteException {
-		if (clients.get(to) == null) {
-			return false;
+	public void send(String to, String from, String drawingId, String mtag, Object data) throws ServerError, RemoteException {
+		Hashtable<String, RMIDrawingClient> clients = drawingClients.get(drawingId);
+		if (clients == null) {
+			throw new ServerError("Drawing does not exist.");
 		}
-		RMIClient receiver = (RMIClient) clients.get(to);
+		if (clients.get(to) == null) {
+			throw new ServerError("The receiver does not exist.");
+		}
+		RMIDrawingClient receiver = (RMIDrawingClient) clients.get(to);
 		receiver.notify(mtag, data, from);
-		
-		return true;
 	};
 	
-	public boolean broadcast(String from, String mtag, Object data) throws IOException, RemoteException {
-		Vector<String> members = getMembers();
+	public void broadcast(String from, String drawingId, String mtag, Object data) throws ServerError, RemoteException {
+		Vector<String> members = getMembers(drawingId);
 		for (String receiver: members) {
-			System.out.println(receiver);
-			send(receiver, from, mtag, data);
+			send(receiver, from, drawingId, mtag, data);
 		}
-		return true;
 	}
 	
 	public static void main(String[] args) {
