@@ -7,4 +7,5 @@ public class MessageTag {
 	public static String NEW_MEMBER = "NEW_MEMBER";
 	public static String MANAGER_DECLINED = "MANAGER_DECLINED";
 	public static String CHAT = "CHAT";
+	public static String USERNAME_EXISTED = "USERNAME_EXISTED";
 }

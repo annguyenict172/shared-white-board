@@ -7,6 +7,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.rmi.registry.*;
 import java.util.Hashtable;
 import java.util.UUID;
+import java.util.Vector;
 
 
 public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawingClient {
@@ -22,6 +23,18 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 		this.drawingBoard = drawingBoard;
 		Registry registry = LocateRegistry.getRegistry(hostname, port);
 		server = (RMIDrawingServer) registry.lookup(serverName);
+	}
+	
+	public boolean isManager() {
+		try {
+			return server.isManager(username, drawingId);
+		} catch (RemoteException e) {
+			drawingBoard.notifyError("Cannot connect to server");
+			return false;
+		} catch (ServerError e) {
+			drawingBoard.notifyError(e.getMessage());
+			return false;
+		}
 	}
 	
 	public void createDrawing() {
@@ -101,6 +114,18 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 	
 	public void notify(String tag, Object data, String src) throws RemoteException {
 		drawingBoard.notify(tag, data, src);
+	}
+	
+	public Vector<String> getMembers() {
+		try {
+			return server.getMembers(this.drawingId);
+		} catch (RemoteException e) {
+			drawingBoard.notifyError("Cannot connect to server");
+			return null;
+		} catch (ServerError e) {
+			drawingBoard.notifyError(e.getMessage());
+			return null;
+		}
 	}
 }
 

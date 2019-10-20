@@ -3,6 +3,7 @@ package whiteboard;
 import java.io.*;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.Vector;
 
 import javax.imageio.ImageIO;
 
@@ -58,6 +59,7 @@ public class DrawingBoard extends Application{
 	private  int count = 0;			//used to control the sequence of text tool events
 	private  DrawingBoardService dbService;
 	
+	// Main drawing board
 	private AnchorPane root = new AnchorPane();
 	private AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
 	private Canvas canvas = new Canvas(1245, 775);				// the canvas, all the shapes are drown on it
@@ -67,6 +69,9 @@ public class DrawingBoard extends Application{
 	private TextField kickWindow = new TextField();				//kick window, input the name of the member that should be kicked out
 	private	 TextArea communicationWindow = new TextArea();		//dialogue window
 	private TextArea inputWindow = new TextArea();				//input window
+	
+	// Login screen
+	private Label loginStatusLabel = new Label();
 
 	public static void main(String[] args) {
 		launch(args);
@@ -88,7 +93,6 @@ public class DrawingBoard extends Application{
 		TextField drawingidField = new TextField();
 		Button createButton = new Button("Create");
 		Button joinButton = new Button("Join");
-		Label statusLabel = new Label();
 		Stage stage = new Stage();
 		Scene scene = new Scene(vBox);
 		
@@ -104,7 +108,7 @@ public class DrawingBoard extends Application{
 						stage.close();
 					}
 					else {
-						statusLabel.setText("Please input an username");
+						loginStatusLabel.setText("Please input an username");
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -119,14 +123,13 @@ public class DrawingBoard extends Application{
 					if(!usernameField.getText().equals("") && !drawingidField.getText().equals("")) {
 						String username = usernameField.getText();		//This is the username.the name should be delivered to other modules!!
 						String drawingid = drawingidField.getText();		//This is the drawingid.the id should be delivered to other modules!!
-						statusLabel.setText("Waiting for the acceptance......");
+						loginStatusLabel.setText("Waiting for the acceptance......");
 						//the codes here should check the drawingid 
 						dbService.username = username;
 						dbService.joinDrawing(drawingid);
-						
 					}
 					else {
-						statusLabel.setText("Please input the username and drawing ID. ");
+						loginStatusLabel.setText("Please input the username and drawing ID. ");
 					}
 					
 				} catch (Exception e) {
@@ -149,7 +152,7 @@ public class DrawingBoard extends Application{
 		vBox.setSpacing(15.0);
 		vBox.setPadding(new Insets(30));
 		hBox.getChildren().addAll(createButton, joinButton);
-		vBox.getChildren().addAll(usernameLabel, usernameField, drawingidLabel, drawingidField, hBox, statusLabel);
+		vBox.getChildren().addAll(usernameLabel, usernameField, drawingidLabel, drawingidField, hBox, loginStatusLabel);
 		stage.setScene(scene);
 		stage.setHeight(350);
 		stage.setWidth(400);
@@ -163,7 +166,17 @@ public class DrawingBoard extends Application{
 		if (tag.compareTo(MessageTag.CHAT) == 0) {
 			communicationWindow.appendText(src + ": " + (String) data + "\r\n");
 		} else if (tag.compareTo(MessageTag.ASK_TO_JOIN) == 0) {
-			dbService.addToDrawing(src, (RMIDrawingClient) data); 
+			Platform.runLater(new Runnable() {
+                @Override public void run() {
+                	boolean answer = ConfirmationBox.display("Confirmation", "Add user " + src + " to current drawing?");
+                	if (answer) {
+                		dbService.addToDrawing(src, (RMIDrawingClient) data); 
+                	} else {
+                		dbService.declineFromDrawing((RMIDrawingClient) data); 
+                	}
+                }
+            });
+        	
 		} else if (tag.compareTo(MessageTag.MANAGER_APPROVED) == 0) {
 			Platform.runLater(new Runnable() {
                  @Override public void run() {
@@ -173,19 +186,52 @@ public class DrawingBoard extends Application{
          				System.err.println("Cannot open drawing application");
         				e.printStackTrace();
         			 }
-          
                  }
              });
+		} else if (tag.compareTo(MessageTag.MANAGER_DECLINED) == 0) {
+			Platform.runLater(new Runnable() {
+                @Override public void run() {
+                	loginStatusLabel.setText("The manager has declined your request to join.");
+                }
+            });
+		} else if (tag.compareTo(MessageTag.USERNAME_EXISTED) == 0) {
+			Platform.runLater(new Runnable() {
+                @Override public void run() {
+                	loginStatusLabel.setText((String) data);
+                }
+            });
+		} else if (tag.compareTo(MessageTag.NEW_MEMBER) == 0 || tag.compareTo(MessageTag.REMOVE_MEMBER) == 0) {
+			memberWindow.clear();
+			Vector<String> members = dbService.getMembers();
+			if (members != null) {
+				for (String member: members) {
+					memberWindow.appendText(member + "\r\n");
+				}
+			}
 		}
-		
 	}
 	
 	public void notifyError(String error) {
-		System.err.println(error);
+		Platform.runLater(new Runnable() {
+            @Override public void run() {
+            	AlertBox.display("Error", error);
+            }
+        });
 	}
 	
 //  the drawning board gui
 	public void board() throws Exception {
+		System.out.println("Is manager: " + dbService.isManager());
+		if (dbService.isManager()) {
+			memberWindow.clear();
+			Vector<String> members = dbService.getMembers();
+			System.out.println("Initial members: " + members);
+			if (members != null) {
+				for (String member: members) {
+					memberWindow.appendText(member + "\r\n");
+				}
+			}
+		}
 		AnchorPane root = new AnchorPane();
 		AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
 		AnchorPane textPane = new AnchorPane();				//used to show the text label and shape moving tracks
@@ -924,6 +970,7 @@ public class DrawingBoard extends Application{
 			public void handle(MouseEvent event) {
 				try {
 					dbService.broadcast(MessageTag.CHAT, inputWindow.getText());
+					inputWindow.clear();
 				} catch (Exception e) {
 					System.err.println("Error communicating with server: " + e);
 				}
@@ -985,7 +1032,7 @@ public class DrawingBoard extends Application{
 		stage.setWidth(1300);
 		stage.setMinHeight(500);
 		stage.setMinWidth(1100);
-		stage.setTitle("IG Drawing Board");
+		stage.setTitle("Drawing ID: " + dbService.drawingId);
 		stage.show();
 		
 	

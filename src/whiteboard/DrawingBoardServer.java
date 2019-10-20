@@ -58,6 +58,10 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		if (clients == null) {
 			throw new ServerError("Drawing does not exist.");
 		}
+		
+		if (clients.get(username) != null) {
+			throw new ServerError("Your username has already been chosen by someone else. Please choose another name.");
+		}
 
 		send(manager, username, drawingId, MessageTag.ASK_TO_JOIN, client);
 	}
@@ -67,6 +71,12 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		
 		if (clients == null) {
 			throw new ServerError("Drawing does not exist.");
+		}
+		
+		if (clients.get(username) != null) {
+			String message = "Your username has already been chosen by someone else. Please choose another name.";
+			send(username, null, drawingId, MessageTag.USERNAME_EXISTED, null);
+			return;
 		}
 		
 		String key = drawingKeys.get(drawingId);
@@ -96,8 +106,13 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		if (clients == null) {
 			throw new ServerError("Drawing does not exist.");
 		}
+		
 		if (clients.get(username) == null) {
 			throw new ServerError("User does not exist.");
+		}
+		
+		if (isManager(username, drawingId)) {
+			throw new ServerError("You cannot kick yourself.");
 		}
 
 		clients.remove(username);
@@ -109,7 +124,7 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 	
 	public boolean isManager(String username, String drawingId) throws ServerError, RemoteException {
 		String manager = drawingManagers.get(drawingId);
-		if (manager != username) {
+		if (manager.compareTo(username) != 0) {
 			return false;
 		}
 		return true;
