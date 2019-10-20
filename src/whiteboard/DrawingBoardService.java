@@ -143,5 +143,16 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 			return null;
 		}
 	}
+	
+	// Quit the drawing
+	public void quit() {
+		try {
+			server.quit(this.username, this.drawingId);
+		} catch (RemoteException e) {
+			drawingBoard.notifyError("Cannot connect to server");
+		} catch (ServerError e) {
+			drawingBoard.notifyError(e.getMessage());
+		}
+	}
 }
 

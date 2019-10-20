@@ -59,6 +59,10 @@ public class DrawingBoard extends Application{
 	private  int count = 0;			//used to control the sequence of text tool events
 	private  DrawingBoardService dbService;
 	
+	private Stage loginStage;
+	private Stage drawingStage;
+	private String notificationMessage;
+	
 	// Main drawing board
 	private AnchorPane root = new AnchorPane();
 	private AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
@@ -157,6 +161,7 @@ public class DrawingBoard extends Application{
 		stage.setHeight(350);
 		stage.setWidth(400);
 		stage.setTitle("IG Drawing Board login");
+		loginStage = stage;
 		stage.show();
 //		stage.getIcons().add(new Image(getClass().getResourceAsStream("download.jpg")));		//set the icon of this app
 	}
@@ -202,7 +207,7 @@ public class DrawingBoard extends Application{
                 	loginStatusLabel.setText((String) data);
                 }
             });
-		} else if (tag.compareTo(MessageTag.NEW_MEMBER) == 0 || tag.compareTo(MessageTag.REMOVE_MEMBER) == 0) {
+		} else if (tag.compareTo(MessageTag.NEW_MEMBER) == 0 || tag.compareTo(MessageTag.REMOVE_MEMBER) == 0 || tag.compareTo(MessageTag.MEMBER_QUIT) == 0) {
 			memberWindow.clear();
 			Vector<String> members = dbService.getMembers();
 			if (members != null) {
@@ -210,6 +215,35 @@ public class DrawingBoard extends Application{
 					memberWindow.appendText(member + "\r\n");
 				}
 			}
+			
+			if (tag.compareTo(MessageTag.NEW_MEMBER) == 0) {
+				notificationMessage = (String) data + " has joined the drawing";
+			} else if (tag.compareTo(MessageTag.REMOVE_MEMBER) == 0) {
+				notificationMessage = (String) data + " has been kicked out of the drawing";
+			} else if (tag.compareTo(MessageTag.MEMBER_QUIT) == 0) {
+				notificationMessage = (String) data + " has quit the drawing";
+			}
+			Platform.runLater(new Runnable() {
+                @Override public void run() {
+                	AlertBox.display("Notification", notificationMessage);
+                }
+            });
+		} else if (tag.compareTo(MessageTag.MANAGER_QUIT) == 0) {
+			Platform.runLater(new Runnable() {
+                @Override public void run() {
+                	AlertBox.display("Notification", "The manager has quit");
+                	drawingStage.close();
+                	loginStatusLabel.setText("");
+                }
+            });
+		} else if (tag.compareTo(MessageTag.KICK_BY_MANAGER) == 0) {
+			Platform.runLater(new Runnable() {
+                @Override public void run() {
+                	AlertBox.display("Notification", "You have been kicked by the manager");
+                	drawingStage.close();
+                	loginStatusLabel.setText("");
+                }
+            });
 		}
 	}
 	
@@ -1038,8 +1072,15 @@ public class DrawingBoard extends Application{
 		stage.setMinWidth(1100);
 		stage.setTitle("Drawing ID: " + dbService.drawingId);
 		stage.show();
+		stage.setOnCloseRequest(e -> {
+			System.out.println("Close the app");
+			dbService.quit();
+			loginStatusLabel.setText("");
+			stage.close();
+		});
 		
-	
+		drawingStage = stage;
+		
 		stage.getIcons().add(new Image(getClass().getResourceAsStream("download.jpg")));		//set the icon of this app
 
 //		listen to the stage width and change the length of menubar

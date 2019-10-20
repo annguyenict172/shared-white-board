@@ -8,4 +8,7 @@ public class MessageTag {
 	public static String MANAGER_DECLINED = "MANAGER_DECLINED";
 	public static String CHAT = "CHAT";
 	public static String USERNAME_EXISTED = "USERNAME_EXISTED";
+	public static String MANAGER_QUIT = "MANAGER_QUIT";
+	public static String MEMBER_QUIT = "MEMBER_QUIT";
+	public static String KICK_BY_MANAGER = "KICK_BY_MANAGER";
 }

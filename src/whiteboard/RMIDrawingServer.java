@@ -17,4 +17,5 @@ public interface RMIDrawingServer extends Remote {
 	public void broadcast(String from, String drawingId, String mtag, Object data) throws ServerError, RemoteException;
 	public void addToDrawing(String username, String drawingId, String managerKey, RMIDrawingClient client) throws ServerError, RemoteException;
 	public void declineFromDrawing(String managerKey, RMIDrawingClient client) throws ServerError, RemoteException;
+	public void quit(String username, String drawingId) throws ServerError, RemoteException;
 }

@@ -124,6 +124,8 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		if (isManager(username, drawingId)) {
 			throw new ServerError("You cannot kick yourself.");
 		}
+		
+		send(username, null, drawingId, MessageTag.KICK_BY_MANAGER, username);
 
 		clients.remove(username);
 		synchronized (drawingClients) {
@@ -172,6 +174,34 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		Vector<String> members = getMembers(drawingId);
 		for (String receiver: members) {
 			send(receiver, from, drawingId, mtag, data);
+		}
+	}
+	
+	public void quit(String username, String drawingId) throws ServerError, RemoteException {
+		Hashtable<String, RMIDrawingClient> clients = drawingClients.get(drawingId);
+		if (clients == null) {
+			throw new ServerError("Drawing does not exist.");
+		}
+		if (clients.get(username) == null) {
+			throw new ServerError("The user does not exist.");
+		}
+		
+		clients.remove(username);
+		synchronized (drawingClients) {
+			drawingClients.put(drawingId, clients);
+		}
+
+		if (isManager(username, drawingId)) {
+			broadcast(null, drawingId, MessageTag.MANAGER_QUIT, username);
+			
+			// Clear all look up tables for the drawing
+			drawingClients.remove(drawingId);
+			drawingManagers.remove(drawingId);
+			drawingKeys.remove(drawingId);
+			drawingChats.remove(drawingId);
+			drawingInstructions.remove(drawingId);
+		} else {
+			broadcast(null, drawingId, MessageTag.MEMBER_QUIT, username);
 		}
 	}
 	
