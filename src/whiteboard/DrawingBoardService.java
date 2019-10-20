@@ -18,6 +18,7 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 	private RMIDrawingServer server;
 	private DrawingBoard drawingBoard;
 	
+	// Connect to the server right after the initialization of this object
 	public DrawingBoardService(String hostname, int port, String serverName, DrawingBoard drawingBoard) throws RemoteException, NotBoundException {
 		super();
 		this.drawingBoard = drawingBoard;
@@ -25,6 +26,7 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 		server = (RMIDrawingServer) registry.lookup(serverName);
 	}
 	
+	// Check if the current user is the manager
 	public boolean isManager() {
 		try {
 			return server.isManager(username, drawingId);
@@ -37,6 +39,8 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 		}
 	}
 	
+	// Create a new drawing, and receive the drawing info from server
+	// If the user calls this method, he will become the manager
 	public void createDrawing() {
 		try {
 			Hashtable<String, String> drawingInfo = server.createDrawing(this.username, this);
@@ -51,6 +55,8 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 		}
 	}
 	
+	// Ask to join a drawing
+	// Still have to wait for approval from the manager
 	public void joinDrawing(String drawingId) {
 		try {
 			server.joinDrawing(this.username, drawingId, this);
@@ -62,6 +68,7 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 		}
 	}
 	
+	// Send a message to another user in the same drawing
 	public void send(String tag, Object data, String dst) {
 		try {
 			server.send(dst, this.username, this.drawingId, tag, data);
@@ -72,6 +79,7 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 		}
 	}
 	
+	// Broadcast a message to all users in the same drawing
 	public void broadcast(String tag, Object data) {
 		try {
 			server.broadcast(this.username, this.drawingId, tag, data);
@@ -82,6 +90,8 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 		}
 	}
 	
+	// Add a user to the current drawing
+	// This method is used by the manager, since only he has the drawing key
 	public void addToDrawing(String username, RMIDrawingClient client) {
 		try {
 			server.addToDrawing(username, this.drawingId, this.drawingKey, client);
@@ -92,6 +102,8 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 		}
 	}
 	
+	// Decline a request to join the current drawing
+	// This method is used by the manager, since only he has the drawing key
 	public void declineFromDrawing(RMIDrawingClient client) {
 		try {
 			server.declineFromDrawing(this.drawingKey, client);
@@ -102,6 +114,8 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 		}
 	}
 	
+	// Kick a member from the current drawing
+	// This method is used by the manager, since only he has the drawing key
 	public void removeMember(String username) {
 		try {
 			server.removeMember(username, this.drawingId, this.drawingKey);
@@ -112,10 +126,12 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 		}
 	}
 	
+	// This method is used by the DrawingBoardServer object to notify the client
 	public void notify(String tag, Object data, String src) throws RemoteException {
 		drawingBoard.notify(tag, data, src);
 	}
 	
+	// Get the list of members from the current drawing
 	public Vector<String> getMembers() {
 		try {
 			return server.getMembers(this.drawingId);

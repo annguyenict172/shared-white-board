@@ -11,9 +11,9 @@ import java.util.UUID;
 
 
 public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawingServer {
-	Hashtable<String, Hashtable<String, RMIDrawingClient>> drawingClients;
-	Hashtable<String, String> drawingManagers;
-	Hashtable<String, String> drawingKeys;
+	Hashtable<String, Hashtable<String, RMIDrawingClient>> drawingClients;	// Store the RMIDrawingClient objects for each drawing
+	Hashtable<String, String> drawingManagers;	// Store the managers for each drawing
+	Hashtable<String, String> drawingKeys;	// Store the manager keys for each drawing
 	Hashtable<String, Vector<String>> drawingChats;
 	Hashtable<String, Vector<String>> drawingInstructions;
 	
@@ -26,7 +26,9 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		drawingInstructions = new Hashtable<String, Vector<String>>();
 	}
 	
+	// Create a new drawing
 	public Hashtable<String, String> createDrawing(String username, RMIDrawingClient client) throws ServerError, RemoteException {
+		// Generate unique drawing ID and manager key
 		String drawingId = UUID.randomUUID().toString();
 		String drawingKey = UUID.randomUUID().toString();
 		Hashtable<String, RMIDrawingClient> clients = new Hashtable<String, RMIDrawingClient>();
@@ -51,6 +53,8 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		return drawingInfo;
 	}
 	
+	// Request to join a specific drawing
+	// Send the request to the manager
 	public void joinDrawing(String username, String drawingId, RMIDrawingClient client) throws ServerError, RemoteException {
 		Hashtable<String, RMIDrawingClient> clients = drawingClients.get(drawingId);
 		String manager = drawingManagers.get(drawingId);
@@ -66,6 +70,7 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		send(manager, username, drawingId, MessageTag.ASK_TO_JOIN, client);
 	}
 	
+	// Used by the manager to add a new member to the current drawing
 	public void addToDrawing(String username, String drawingId, String managerKey, RMIDrawingClient client) throws ServerError, RemoteException {
 		Hashtable<String, RMIDrawingClient> clients = drawingClients.get(drawingId);
 		
@@ -93,14 +98,19 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 			drawingClients.put(drawingId, clients);
 		}
 		
+		// Notify the user that he has been approved
 		send(username, null, drawingId, MessageTag.MANAGER_APPROVED, null);
+		
+		// Notify all the other users that we have a new member
 		broadcast(null, drawingId, MessageTag.NEW_MEMBER, username);
 	}
 	
+	// Used by the manager to decline a request to join from other member
 	public void declineFromDrawing(String managerKey, RMIDrawingClient client) throws ServerError, RemoteException {
 		client.notify(MessageTag.MANAGER_DECLINED, null, null);
 	}
 	
+	// Used by the manager to kick a member from the current drawing
 	public void removeMember(String username, String drawingId, String managerKey) throws ServerError, RemoteException {
 		Hashtable<String, RMIDrawingClient> clients = drawingClients.get(drawingId);
 		if (clients == null) {
@@ -122,6 +132,7 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		broadcast(null, drawingId, MessageTag.REMOVE_MEMBER, username);
 	}
 	
+	// Check if this user is the manager of the current drawing
 	public boolean isManager(String username, String drawingId) throws ServerError, RemoteException {
 		String manager = drawingManagers.get(drawingId);
 		if (manager.compareTo(username) != 0) {
@@ -130,6 +141,7 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		return true;
 	}
 	
+	// Get all members from the current drawing
 	public Vector<String> getMembers(String drawingId) throws ServerError, RemoteException {
 		Hashtable<String, RMIDrawingClient> clients = drawingClients.get(drawingId);
 		if (clients == null) {

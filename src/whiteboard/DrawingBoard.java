@@ -77,7 +77,7 @@ public class DrawingBoard extends Application{
 		launch(args);
 	}
 	
-	//login part
+	// Initial stage with login modal
 	public void start(Stage primaryStage) throws Exception {
 		List<String> args = getParameters().getRaw();
 		String hostName = args.get(0);
@@ -161,6 +161,8 @@ public class DrawingBoard extends Application{
 //		stage.getIcons().add(new Image(getClass().getResourceAsStream("download.jpg")));		//set the icon of this app
 	}
 	
+	// This method is used by the DrawingBoardService
+	// so it can notify the DrawingBoard when it receives the response from server
 	public void notify(String tag, Object data, String src) {
 		System.out.println(tag + " " + data + " " + src);
 		if (tag.compareTo(MessageTag.CHAT) == 0) {
@@ -211,6 +213,8 @@ public class DrawingBoard extends Application{
 		}
 	}
 	
+	// This method is used by the DrawingBoardService
+	// so it can notify the DrawingBoard when it receives any errors from server
 	public void notifyError(String error) {
 		Platform.runLater(new Runnable() {
             @Override public void run() {
@@ -219,7 +223,7 @@ public class DrawingBoard extends Application{
         });
 	}
 	
-//  the drawning board gui
+	//  the drawning board gui
 	public void board() throws Exception {
 		System.out.println("Is manager: " + dbService.isManager());
 		if (dbService.isManager()) {
