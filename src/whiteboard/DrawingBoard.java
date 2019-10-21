@@ -255,25 +255,69 @@ public class DrawingBoard extends Application{
 			Platform.runLater(new Runnable() {
                 @Override public void run() {
                 	Hashtable<String, Object> instruction = (Hashtable<String, Object>) data;
-                	
                 	String drawType = (String) instruction.get("type");
-                	Paint drawColor = Color.valueOf((String) instruction.get("color"));
-                	double drawSize = (double) instruction.get("size");
-                	
-                	// Update the new stroke
-                	graph.setStroke(drawColor);
-                	graph.setLineWidth((int) drawSize);
-           
                 	
                 	if (drawType.compareTo("line") == 0) {
+                    	Paint drawColor = Color.valueOf((String) instruction.get("color"));
+                    	double drawSize = (double) instruction.get("size");
+                    	
+                    	// Update
+                    	graph.setStroke(drawColor);
+                    	graph.setLineWidth((int) drawSize);
                 		double x1 = (double) instruction.get("x1");
                     	double y1 = (double) instruction.get("y1");
                     	double x2 = (double) instruction.get("x2");
                     	double y2 = (double) instruction.get("y2");
                     	graph.strokeLine(x1, y1, x2, y2);
+                    	
+                	} else if (drawType.compareTo("rect") == 0) {
+                		Paint drawColor = Color.valueOf((String) instruction.get("color"));
+                    	double drawSize = (double) instruction.get("size");
+                    	
+                    	// Update
+                    	graph.setStroke(drawColor);
+                    	graph.setLineWidth((int) drawSize);
+                    	
+                		double w = (double) instruction.get("w");
+                    	double h = (double) instruction.get("h");
+                    	double x = (double) instruction.get("x");
+                    	double y = (double) instruction.get("y");
+                    	graph.strokeRect(x, y, w, h);
+                	} else if (drawType.compareTo("oval") == 0) {
+                		Paint drawColor = Color.valueOf((String) instruction.get("color"));
+                    	double drawSize = (double) instruction.get("size");
+                    	
+                    	// Update
+                    	graph.setStroke(drawColor);
+                    	graph.setLineWidth((int) drawSize);
+                    	
+                		double w = (double) instruction.get("w");
+                    	double h = (double) instruction.get("h");
+                    	double x = (double) instruction.get("x");
+                    	double y = (double) instruction.get("y");
+                    	graph.strokeOval(x, y, w, h);
+                	} else if (drawType.compareTo("erase") == 0) {
+                		int w = (int) instruction.get("w");
+                    	int h = (int) instruction.get("h");
+                    	double x = (double) instruction.get("x");
+                    	double y = (double) instruction.get("y");
+                    	graph.clearRect(x, y, w, h);
+                	} else if (drawType.compareTo("text") == 0) {
+                		Paint drawColor = Color.valueOf((String) instruction.get("color"));
+                		int tempFontSize = (int) instruction.get("fontSize");
+                    	String text = (String) instruction.get("text");
+                    	double x = (double) instruction.get("x");
+                    	double y = (double) instruction.get("y");
+                		
+                    	// Update
+                		graph.setFont(Font.font(tempFontSize));
+						graph.setFill(drawColor);
+						graph.fillText(text, x, y);
                 	}
                 	
-                	// Reset the stroke to user's setting
+                	// Reset
+                	graph.setFont(Font.font(fontSize));
+					graph.setFill(color);
                 	graph.setStroke(color);
                 	graph.setLineWidth((int) lineWidthSlider.getValue());
                 }
@@ -604,17 +648,47 @@ public class DrawingBoard extends Application{
 				});
 				aPane.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
 					public void handle(MouseDragEvent event) {
+						double W;
+						double H;
+						double X;
+						double Y;
 						textPane.getChildren().clear();
 						w = event.getX() - x;
 						h = event.getY() - y;
-						if(w>0 && h>0)
-							graph.strokeRect(x, y, w, h);
-						else if(w>0 && h<0)
-							graph.strokeRect(x, y+h, w, -h);
-						else if(w<0 && h>0)
-							graph.strokeRect(x+w, y, -w, h);
-						else if(w<0 && h<0)
-							graph.strokeRect(x+w, y+h, -w, -h);
+						if(w>0 && h>0) {
+							X = x;
+							Y = y;
+							W = w;
+							H = h;
+						} else if (w>0 && h<0) {
+							X = x;
+							Y = y + h;
+							W = w;
+							H = -h;
+						} else if (w<0 && h>0) {
+							X = x + w;
+							Y = y;
+							W = -w;
+							H = h;
+						} else {
+							X = x + w;
+							Y = y + h;
+							W = -w;
+							H = -h;
+						}
+						graph.strokeRect(X, Y, W, H);
+						
+						// Boardcast rect drawing
+						Hashtable<String, Object> instruction = new Hashtable<String, Object>();
+						
+						instruction.put("type", "rect");
+						instruction.put("color", color.toString());
+						instruction.put("size", lineWidthSlider.getValue());
+						instruction.put("x", X);
+						instruction.put("y", Y);
+						instruction.put("w", W);
+						instruction.put("h", H);
+						dbService.broadcast(MessageTag.DRAW, instruction);
 					}
 				});
 			}
@@ -718,41 +792,98 @@ public class DrawingBoard extends Application{
 				});
 				aPane.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
 					public void handle(MouseDragEvent event) {
+						double X;
+						double Y;
+						double W;
+						double H;
 						textPane.getChildren().clear();
 						w = (event.getX()-x);
 						h = (event.getY()-y);
 						if(!event.isControlDown()) {				//if do not press ctrl, draw oval
-							if(w>0 && h>0)
-								graph.strokeOval(x, y, w, h);
-							else if(w>0 && h<0)
-								graph.strokeOval(x, y+h, w, -h);
-							else if(w<0 && h>0)
-								graph.strokeOval(x+w, y, -w, h);
-							else if(w<0 && h<0)
-								graph.strokeOval(x+w, y+h, -w, -h);
+							if(w>0 && h>0) {
+								X = x;
+								Y = y;
+								W = w;
+								H = h;
+							} else if(w>0 && h<0) {
+								X = x;
+								Y = y + h;
+								W = w;
+								H = -h;
+							} else if(w<0 && h>0) {
+								X = x + w;
+								Y = y;
+								W = -w;
+								H = h;
+							} else {
+								X = x + w;
+								Y = y + h;
+								W = -w;
+								H = -h;
+							}
 						}
-						else if(event.isControlDown()) {			//draw circle when press ctrl
+						else {			//draw circle when press ctrl
 							if((Math.abs(w)-Math.abs(h))>0) {
-								if(w>0 && h>0)
-									graph.strokeOval(x, y, h, h);
-								else if(w>0 && h<0)
-									graph.strokeOval(x, y+h, -h, -h);
-								else if(w<0 && h>0)
-									graph.strokeOval(x-h, y, h, h);
-								else if(w<0 && h<0)
-									graph.strokeOval(x+h, y+h, -h, -h);
+								if(w>0 && h>0) {
+									X = x;
+									Y = y;
+									W = h;
+									H = h;
+								} else if(w>0 && h<0) {
+									X = x;
+									Y = y + h;
+									W = -h;
+									H = -h;
+								} else if(w<0 && h>0) {
+									X = x - h;
+									Y = y;
+									W = h;
+									H = h;
+								} else {
+									X = x + h;
+									Y = y + h;
+									W = -h;
+									H = -h;
+								}
 							}
-							else if((Math.abs(w)-Math.abs(h))<0) {
-								if(w>0 && h>0)
-									graph.strokeOval(x, y, w, w);
-								else if(w>0 && h<0)
-									graph.strokeOval(x, y-w, w, w);
-								else if(w<0 && h>0)
-									graph.strokeOval(x+w, y, -w, -w);
-								else if(w<0 && h<0)
-									graph.strokeOval(x+w, y+w, -w, -w);
+							else {
+								if(w>0 && h>0) {
+									X = x;
+									Y = y;
+									W = w;
+									H = w;
+								} else if(w>0 && h<0) {
+									X = x;
+									Y = y - w;
+									W = w;
+									H = w;
+								} else if(w<0 && h>0) {
+									X = x + w;
+									Y = y;
+									W = -w;
+									H = -w;
+								} else {
+									X = x + w;
+									Y = y + w;
+									W = -w;
+									H = -w;
+								}
 							}
 						}
+						
+						graph.strokeOval(X, Y, W, H);
+						
+						// Boardcast oval drawing
+						Hashtable<String, Object> instruction = new Hashtable<String, Object>();
+						
+						instruction.put("type", "oval");
+						instruction.put("color", color.toString());
+						instruction.put("size", lineWidthSlider.getValue());
+						instruction.put("x", X);
+						instruction.put("y", Y);
+						instruction.put("w", W);
+						instruction.put("h", H);
+						dbService.broadcast(MessageTag.DRAW, instruction);
 					}
 				});
 			}
@@ -786,6 +917,16 @@ public class DrawingBoard extends Application{
 						eraserTrack.setOpacity(0.05);
 						textPane.getChildren().add(eraserTrack);
 						graph.clearRect(x-eraserSize/2, y-eraserSize/2, eraserSize, eraserSize);
+						
+						// Boardcast eraser
+						Hashtable<String, Object> instruction = new Hashtable<String, Object>();
+						
+						instruction.put("type", "erase");
+						instruction.put("x", x-eraserSize/2);
+						instruction.put("y", y-eraserSize/2);
+						instruction.put("w", eraserSize);
+						instruction.put("h", eraserSize);
+						dbService.broadcast(MessageTag.DRAW, instruction);
 					}
 				});
 				aPane.setOnMouseDragReleased(new EventHandler<MouseDragEvent>() {	
@@ -831,7 +972,18 @@ public class DrawingBoard extends Application{
 								graph.setFont(Font.font(fontSize));
 								graph.setFill(color);
 								graph.fillText(text.getText(), x+fontSize*0.65, y+fontSize*1.33);
-								count = 2;							
+								count = 2;
+								
+								// Boardcast text
+								Hashtable<String, Object> instruction = new Hashtable<String, Object>();
+								
+								instruction.put("type", "text");
+								instruction.put("color", color.toString());
+								instruction.put("fontSize", fontSize);
+								instruction.put("text", text.getText());
+								instruction.put("x", x+fontSize*0.65);
+								instruction.put("y", y+fontSize*1.33);
+								dbService.broadcast(MessageTag.DRAW, instruction);
 							}							
 					}
 				});
