@@ -133,7 +133,7 @@ public class DrawingBoard extends Application{
 						//the codes here should check the drawingid 
 						dbService.username = username;
 						dbService.joinDrawing(drawingid);
-						stage.close();
+//						stage.close();
 					}
 					else {
 						loginStatusLabel.setText("Please input the username and drawing ID. ");
