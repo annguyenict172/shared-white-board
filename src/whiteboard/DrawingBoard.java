@@ -469,6 +469,19 @@ public class DrawingBoard extends Application{
 							y = event.getY();
 						}
 						graph.strokeLine(x, y, event.getX(), event.getY());
+						
+						// Boardcast line drawing
+						Hashtable<String, Object> instruction = new Hashtable<String, Object>();
+						
+						instruction.put("type", "line");
+						instruction.put("color", color.toString());
+						instruction.put("size", lineWidthSlider.getValue());
+						instruction.put("x1", x);
+						instruction.put("y1", y);
+						instruction.put("x2", event.getX());
+						instruction.put("y2", event.getY());
+						dbService.broadcast(MessageTag.DRAW, instruction);
+						
 						x = event.getX();
 						y = event.getY();
 					}
