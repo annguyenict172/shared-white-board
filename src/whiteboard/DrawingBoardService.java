@@ -85,6 +85,7 @@ public class DrawingBoardService extends UnicastRemoteObject implements RMIDrawi
 			server.broadcast(this.username, this.drawingId, tag, data);
 		} catch (RemoteException e) {
 			drawingBoard.notifyError("Cannot connect to server");
+			System.err.println(e);
 		} catch (ServerError e) {
 			drawingBoard.notifyError(e.getMessage());
 		}

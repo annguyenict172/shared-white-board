@@ -11,4 +11,5 @@ public class MessageTag {
 	public static String MANAGER_QUIT = "MANAGER_QUIT";
 	public static String MEMBER_QUIT = "MEMBER_QUIT";
 	public static String KICK_BY_MANAGER = "KICK_BY_MANAGER";
+	public static String DRAW = "DRAW";
 }

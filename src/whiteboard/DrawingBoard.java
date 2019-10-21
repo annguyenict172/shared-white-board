@@ -2,6 +2,7 @@ package whiteboard;
 
 import java.io.*;
 import java.rmi.RemoteException;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 
@@ -66,13 +67,14 @@ public class DrawingBoard extends Application{
 	// Main drawing board
 	private AnchorPane root = new AnchorPane();
 	private AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
-	private Canvas canvas = new Canvas(1245, 775);				// the canvas, all the shapes are drown on it
-	private GraphicsContext graph = canvas.getGraphicsContext2D();	//the pen used to draw
+	private Canvas canvas;			// the canvas, all the shapes are drown on it
+	private GraphicsContext graph;	//the pen used to draw
 	private AnchorPane textPane = new AnchorPane();				//used to show the text label and shape moving tracks
 	private TextArea memberWindow = new TextArea();				//show the member list and some other information
 	private TextField kickWindow = new TextField();				//kick window, input the name of the member that should be kicked out
 	private	 TextArea communicationWindow = new TextArea();		//dialogue window
 	private TextArea inputWindow = new TextArea();				//input window
+	private Slider lineWidthSlider;
 	
 	// Login screen
 	private Label loginStatusLabel = new Label();
@@ -244,6 +246,37 @@ public class DrawingBoard extends Application{
                 	loginStatusLabel.setText("");
                 }
             });
+		} else if (tag.compareTo(MessageTag.DRAW) == 0) {
+			if (src.compareTo(dbService.username) == 0) {
+				return;
+			}
+			
+			Platform.runLater(new Runnable() {
+                @Override public void run() {
+                	Hashtable<String, Object> instruction = (Hashtable<String, Object>) data;
+                	
+                	String drawType = (String) instruction.get("type");
+                	Paint drawColor = Color.valueOf((String) instruction.get("color"));
+                	double drawSize = (double) instruction.get("size");
+                	
+                	// Update the new stroke
+                	graph.setStroke(drawColor);
+                	graph.setLineWidth((int) drawSize);
+           
+                	
+                	if (drawType.compareTo("line") == 0) {
+                		double x1 = (double) instruction.get("x1");
+                    	double y1 = (double) instruction.get("y1");
+                    	double x2 = (double) instruction.get("x2");
+                    	double y2 = (double) instruction.get("y2");
+                    	graph.strokeLine(x1, y1, x2, y2);
+                	}
+                	
+                	// Reset the stroke to user's setting
+                	graph.setStroke(color);
+                	graph.setLineWidth((int) lineWidthSlider.getValue());
+                }
+            });
 		}
 	}
 	
@@ -273,11 +306,11 @@ public class DrawingBoard extends Application{
 		AnchorPane root = new AnchorPane();
 		AnchorPane aPane = new AnchorPane();				//the canvas is on the aPane
 		AnchorPane textPane = new AnchorPane();				//used to show the text label and shape moving tracks
-		Canvas canvas = new Canvas(1245, 775);
-		GraphicsContext graph = canvas.getGraphicsContext2D();
+		canvas = new Canvas(1245, 775);
+		graph = canvas.getGraphicsContext2D();
 		graph.setLineCap(StrokeLineCap.ROUND);
 //		used to set the width of line 
-		Slider lineWidthSlider = new Slider(1, 30, 1);	
+		lineWidthSlider = new Slider(1, 30, 1);	
 		Label lineWidthShowing = new Label();
 		lineWidthShowing.setText(Double.toString(1.0));
 		lineWidthSlider.setOnMousePressed(new EventHandler<MouseEvent>() {
@@ -486,6 +519,18 @@ public class DrawingBoard extends Application{
 						x2 = event.getX();
 						y2 = event.getY();
 						graph.strokeLine(x1, y1, x2, y2);
+						
+						// Boardcast line drawing
+						Hashtable<String, Object> instruction = new Hashtable<String, Object>();
+						
+						instruction.put("type", "line");
+						instruction.put("color", color.toString());
+						instruction.put("size", lineWidthSlider.getValue());
+						instruction.put("x1", x1);
+						instruction.put("y1", y1);
+						instruction.put("x2", x2);
+						instruction.put("y2", y2);
+						dbService.broadcast(MessageTag.DRAW, instruction);
 					}
 				});
 			}
