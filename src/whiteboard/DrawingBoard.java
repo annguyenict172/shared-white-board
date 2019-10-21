@@ -133,6 +133,7 @@ public class DrawingBoard extends Application{
 						//the codes here should check the drawingid 
 						dbService.username = username;
 						dbService.joinDrawing(drawingid);
+						stage.close();
 					}
 					else {
 						loginStatusLabel.setText("Please input the username and drawing ID. ");
@@ -385,7 +386,12 @@ public class DrawingBoard extends Application{
 		MenuItem item6 = new MenuItem("Guide");
 		fileMenu.getItems().addAll(item1, item2, item3, item4, item5);
 		helpMenu.getItems().addAll(item6);
-		menuBar.getMenus().addAll(fileMenu, helpMenu);
+		if (dbService.isManager()) {
+			menuBar.getMenus().addAll(fileMenu, helpMenu);
+		}
+		else {
+			menuBar.getMenus().addAll(helpMenu);
+		}
 
 //		all menu items events
 		item1.setOnAction(new EventHandler<ActionEvent>() {
@@ -1095,7 +1101,12 @@ public class DrawingBoard extends Application{
 		VBox windowPane = new VBox();
 		windowPane.setPrefWidth(280);
 		windowPane.setStyle("-fx-background-color:#ADD8E6;");	
-		windowPane.getChildren().addAll(label1, memberWindow, kickWindow, kickButton, label2, communicationWindow, inputWinBox);
+		if(dbService.isManager()) {
+			windowPane.getChildren().addAll(label1, memberWindow, kickWindow, kickButton, label2, communicationWindow, inputWinBox);
+		}
+		else {
+			windowPane.getChildren().addAll(label1, memberWindow, label2, communicationWindow, inputWinBox);
+		}
 		windowPane.setPadding(new Insets(5.0));
 		windowPane.setSpacing(5.0);
 
