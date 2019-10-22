@@ -1436,12 +1436,12 @@ public class DrawingBoard extends Application{
 			public void handle(MouseEvent event) {
 				WritableImage image = canvas.snapshot(new SnapshotParameters(), null);
 				try {
-					File file = new File(routeTextField.getText() + "\\" + fileNameTextField.getText()+ ".png");
+					File file = new File(routeTextField.getText() + fileNameTextField.getText()+ ".png");
 					ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
 					alertLabel.setText("Saving success!");
 					aPane.setTopAnchor(alertLabel, 150.0);
 					aPane.setLeftAnchor(alertLabel, 245.0);
-					saveRoute = routeTextField.getText() + "\\" + fileNameTextField.getText()+ ".png";
+					saveRoute = routeTextField.getText() + fileNameTextField.getText()+ ".png";
 					status = true;
 					if(q==1)
 						System.exit(0);
