@@ -15,7 +15,7 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 	Hashtable<String, String> drawingManagers;	// Store the managers for each drawing
 	Hashtable<String, String> drawingKeys;	// Store the manager keys for each drawing
 	Hashtable<String, Vector<String>> drawingChats;
-	Hashtable<String, Vector<String>> drawingInstructions;
+	Hashtable<String, Vector<Hashtable<String, Object>>> drawingInstructions;
 	
 	public DrawingBoardServer() throws RemoteException {
 		super();
@@ -23,7 +23,7 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		drawingManagers = new Hashtable<String, String>();
 		drawingKeys = new Hashtable<String, String>();
 		drawingChats = new Hashtable<String, Vector<String>>();
-		drawingInstructions = new Hashtable<String, Vector<String>>();
+		drawingInstructions = new Hashtable<String, Vector<Hashtable<String, Object>>>();
 	}
 	
 	// Create a new drawing
@@ -43,6 +43,12 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		}
 		synchronized (drawingKeys) {
 			drawingKeys.put(drawingId, drawingKey);
+		}
+		synchronized (drawingInstructions) {
+			drawingInstructions.put(drawingId, new Vector<Hashtable<String, Object>>());
+		}
+		synchronized (drawingChats) {
+			drawingChats.put(drawingId, new Vector<String>());
 		}
 		
 		// Send the info back to the manager
@@ -100,6 +106,12 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 		
 		// Notify the user that he has been approved
 		send(username, null, drawingId, MessageTag.MANAGER_APPROVED, null);
+		
+		Vector<Hashtable<String, Object>> instructions = drawingInstructions.get(drawingId);
+		send(username, null, drawingId, MessageTag.CURRENT_DRAWING_INSTRUCTIONS, instructions);
+		
+		Vector<String> chats = drawingChats.get(drawingId);
+		send(username, null, drawingId, MessageTag.CURRENT_CHATS, chats);
 		
 		// Notify all the other users that we have a new member
 		broadcast(null, drawingId, MessageTag.NEW_MEMBER, username);
@@ -171,6 +183,27 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 	};
 	
 	public void broadcast(String from, String drawingId, String mtag, Object data) throws ServerError, RemoteException {
+		// Store the drawing and chat
+		if (mtag.compareTo(MessageTag.DRAW) == 0) {
+			Vector<Hashtable<String, Object>> instructions = (Vector<Hashtable<String, Object>>) drawingInstructions.get(drawingId);
+			if (instructions == null) {
+				throw new ServerError("Drawing does not exist.");
+			}
+			instructions.add((Hashtable<String, Object>) data);
+			synchronized (drawingInstructions) {
+				drawingInstructions.put(drawingId, instructions);
+			}
+		} else if (mtag.compareTo(MessageTag.CHAT) == 0) {
+			Vector<String> chats = (Vector<String>) drawingChats.get(drawingId);
+			if (chats == null) {
+				throw new ServerError("Drawing does not exist.");
+			}
+			chats.add(from + ": " + (String) data);
+			synchronized (drawingChats) {
+				drawingChats.put(drawingId, chats);
+			}
+		}
+		
 		Vector<String> members = getMembers(drawingId);
 		for (String receiver: members) {
 			send(receiver, from, drawingId, mtag, data);

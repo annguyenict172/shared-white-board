@@ -12,4 +12,7 @@ public class MessageTag {
 	public static String MEMBER_QUIT = "MEMBER_QUIT";
 	public static String KICK_BY_MANAGER = "KICK_BY_MANAGER";
 	public static String DRAW = "DRAW";
+	public static String CURRENT_DRAWING_INSTRUCTIONS = "CURRENT_DRAWING_INSTRUCTIONS";
+	public static String CURRENT_CHATS = "CURRENT_CHATS";
+	public static String NEW_FILE = "NEW_FILE";
 }

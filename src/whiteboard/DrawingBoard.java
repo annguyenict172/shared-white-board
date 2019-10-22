@@ -255,75 +255,108 @@ public class DrawingBoard extends Application{
 			Platform.runLater(new Runnable() {
                 @Override public void run() {
                 	Hashtable<String, Object> instruction = (Hashtable<String, Object>) data;
-                	String drawType = (String) instruction.get("type");
-                	
-                	if (drawType.compareTo("line") == 0) {
-                    	Paint drawColor = Color.valueOf((String) instruction.get("color"));
-                    	double drawSize = (double) instruction.get("size");
-                    	
-                    	// Update
-                    	graph.setStroke(drawColor);
-                    	graph.setLineWidth((int) drawSize);
-                		double x1 = (double) instruction.get("x1");
-                    	double y1 = (double) instruction.get("y1");
-                    	double x2 = (double) instruction.get("x2");
-                    	double y2 = (double) instruction.get("y2");
-                    	graph.strokeLine(x1, y1, x2, y2);
-                    	
-                	} else if (drawType.compareTo("rect") == 0) {
-                		Paint drawColor = Color.valueOf((String) instruction.get("color"));
-                    	double drawSize = (double) instruction.get("size");
-                    	
-                    	// Update
-                    	graph.setStroke(drawColor);
-                    	graph.setLineWidth((int) drawSize);
-                    	
-                		double w = (double) instruction.get("w");
-                    	double h = (double) instruction.get("h");
-                    	double x = (double) instruction.get("x");
-                    	double y = (double) instruction.get("y");
-                    	graph.strokeRect(x, y, w, h);
-                	} else if (drawType.compareTo("oval") == 0) {
-                		Paint drawColor = Color.valueOf((String) instruction.get("color"));
-                    	double drawSize = (double) instruction.get("size");
-                    	
-                    	// Update
-                    	graph.setStroke(drawColor);
-                    	graph.setLineWidth((int) drawSize);
-                    	
-                		double w = (double) instruction.get("w");
-                    	double h = (double) instruction.get("h");
-                    	double x = (double) instruction.get("x");
-                    	double y = (double) instruction.get("y");
-                    	graph.strokeOval(x, y, w, h);
-                	} else if (drawType.compareTo("erase") == 0) {
-                		int w = (int) instruction.get("w");
-                    	int h = (int) instruction.get("h");
-                    	double x = (double) instruction.get("x");
-                    	double y = (double) instruction.get("y");
-                    	graph.clearRect(x, y, w, h);
-                	} else if (drawType.compareTo("text") == 0) {
-                		Paint drawColor = Color.valueOf((String) instruction.get("color"));
-                		int tempFontSize = (int) instruction.get("fontSize");
-                    	String text = (String) instruction.get("text");
-                    	double x = (double) instruction.get("x");
-                    	double y = (double) instruction.get("y");
-                		
-                    	// Update
-                		graph.setFont(Font.font(tempFontSize));
-						graph.setFill(drawColor);
-						graph.fillText(text, x, y);
-                	}
-                	
-                	// Reset
-                	graph.setFont(Font.font(fontSize));
-					graph.setFill(color);
-                	graph.setStroke(color);
-                	graph.setLineWidth((int) lineWidthSlider.getValue());
+                	drawWithInstruction(instruction);
                 }
             });
+		} else if (tag.compareTo(MessageTag.CURRENT_CHATS) == 0) {
+			Platform.runLater(new Runnable() {
+                @Override public void run() {
+                	Vector<String> chats = (Vector<String>) data;
+                	for (String chat: chats) {
+                		communicationWindow.appendText(chat + "\r\n");
+                	}
+                }
+            });
+		} else if (tag.compareTo(MessageTag.CURRENT_DRAWING_INSTRUCTIONS) == 0) {
+			Platform.runLater(new Runnable() {
+                @Override public void run() {
+                	Vector<Hashtable<String, Object>> instructions = (Vector<Hashtable<String, Object>>) data;
+                	for (Hashtable<String, Object> instruction: instructions) {
+                		drawWithInstruction(instruction);
+                	}
+                }
+            });
+		} else if (tag.compareTo(MessageTag.NEW_FILE) == 0) {
+			Platform.runLater(new Runnable() {
+                @Override public void run() {        			
+        			SerializableImage serializeImage = (SerializableImage) data;
+        			Image image = serializeImage.getImage();
+        			graph.clearRect(0, 0, 10000, 10000);
+        			graph.drawImage(image, 0, 0);
+                }
+            });
+			
 		}
 	}
+	
+	// This function draw thing with an instruction
+	public void drawWithInstruction(Hashtable<String, Object> instruction) {
+		String drawType = (String) instruction.get("type");
+		if (drawType.compareTo("line") == 0) {
+        	Paint drawColor = Color.valueOf((String) instruction.get("color"));
+        	double drawSize = (double) instruction.get("size");
+        	
+        	// Update
+        	graph.setStroke(drawColor);
+        	graph.setLineWidth((int) drawSize);
+    		double x1 = (double) instruction.get("x1");
+        	double y1 = (double) instruction.get("y1");
+        	double x2 = (double) instruction.get("x2");
+        	double y2 = (double) instruction.get("y2");
+        	graph.strokeLine(x1, y1, x2, y2);
+        	
+    	} else if (drawType.compareTo("rect") == 0) {
+    		Paint drawColor = Color.valueOf((String) instruction.get("color"));
+        	double drawSize = (double) instruction.get("size");
+        	
+        	// Update
+        	graph.setStroke(drawColor);
+        	graph.setLineWidth((int) drawSize);
+        	
+    		double w = (double) instruction.get("w");
+        	double h = (double) instruction.get("h");
+        	double x = (double) instruction.get("x");
+        	double y = (double) instruction.get("y");
+        	graph.strokeRect(x, y, w, h);
+    	} else if (drawType.compareTo("oval") == 0) {
+    		Paint drawColor = Color.valueOf((String) instruction.get("color"));
+        	double drawSize = (double) instruction.get("size");
+        	
+        	// Update
+        	graph.setStroke(drawColor);
+        	graph.setLineWidth((int) drawSize);
+        	
+    		double w = (double) instruction.get("w");
+        	double h = (double) instruction.get("h");
+        	double x = (double) instruction.get("x");
+        	double y = (double) instruction.get("y");
+        	graph.strokeOval(x, y, w, h);
+    	} else if (drawType.compareTo("erase") == 0) {
+    		int w = (int) instruction.get("w");
+        	int h = (int) instruction.get("h");
+        	double x = (double) instruction.get("x");
+        	double y = (double) instruction.get("y");
+        	graph.clearRect(x, y, w, h);
+    	} else if (drawType.compareTo("text") == 0) {
+    		Paint drawColor = Color.valueOf((String) instruction.get("color"));
+    		int tempFontSize = (int) instruction.get("fontSize");
+        	String text = (String) instruction.get("text");
+        	double x = (double) instruction.get("x");
+        	double y = (double) instruction.get("y");
+    		
+        	// Update
+    		graph.setFont(Font.font(tempFontSize));
+			graph.setFill(drawColor);
+			graph.fillText(text, x, y);
+    	}
+    	
+    	// Reset
+    	graph.setFont(Font.font(fontSize));
+		graph.setFill(color);
+    	graph.setStroke(color);
+    	graph.setLineWidth((int) lineWidthSlider.getValue());
+	}
+	
 	
 	// This method is used by the DrawingBoardService
 	// so it can notify the DrawingBoard when it receives any errors from server
@@ -1489,10 +1522,16 @@ public class DrawingBoard extends Application{
 			public void handle(MouseEvent event) {
 				try {
 					File file = new File(routeTextField.getText());
-					if(file.exists()){				//to see whether the rought is right
+					if(file.exists()){				//to see whether the rought is right				
 						Image image = new Image("file:"+routeTextField.getText());
 						graph.clearRect(0, 0, 10000, 10000);
 						graph.drawImage(image, 0, 0);
+						
+						// Broadcast the change
+						SerializableImage serializeImage = new SerializableImage();
+						serializeImage.setImage(image);
+						dbService.broadcast(MessageTag.NEW_FILE, serializeImage);
+						
 						status = true;
 						saveRoute = routeTextField.getText();
 						stage.close();						
