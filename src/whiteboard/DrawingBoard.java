@@ -88,7 +88,6 @@ public class DrawingBoard extends Application{
 		List<String> args = getParameters().getRaw();
 		String hostName = args.get(0);
 		int port = Integer.parseInt(args.get(1));
-		
 		dbService = new DrawingBoardService(hostName, port, "WhiteBoard", this);
 		
 		VBox vBox = new VBox();
@@ -278,11 +277,16 @@ public class DrawingBoard extends Application{
 //            });
 		} else if (tag.compareTo(MessageTag.NEW_FILE) == 0) {
 			Platform.runLater(new Runnable() {
-                @Override public void run() {        			
-        			SerializableImage serializeImage = (SerializableImage) data;
-        			Image image = serializeImage.getImage();
-        			graph.clearRect(0, 0, 10000, 10000);
-        			graph.drawImage(image, 0, 0);
+                @Override public void run() { 
+                	if (data != null)
+                	{
+                		SerializableImage serializeImage = (SerializableImage) data;
+            			Image image = serializeImage.getImage();
+            			graph.clearRect(0, 0, 10000, 10000);
+            			graph.drawImage(image, 0, 0);
+                	}
+                	else
+                		graph.clearRect(0, 0, 10000, 10000);        			
                 }
             });
 			
@@ -492,6 +496,7 @@ public class DrawingBoard extends Application{
 			public void handle(ActionEvent event) {
 				try {
 					newFile(canvas, graph);
+					dbService.broadcast("NEW_FILE", null);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
