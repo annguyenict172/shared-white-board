@@ -268,14 +268,14 @@ public class DrawingBoard extends Application{
                 }
             });
 		} else if (tag.compareTo(MessageTag.CURRENT_DRAWING_INSTRUCTIONS) == 0) {
-			Platform.runLater(new Runnable() {
-                @Override public void run() {
-                	Vector<Hashtable<String, Object>> instructions = (Vector<Hashtable<String, Object>>) data;
-                	for (Hashtable<String, Object> instruction: instructions) {
-                		drawWithInstruction(instruction);
-                	}
-                }
-            });
+//			Platform.runLater(new Runnable() {
+//                @Override public void run() {
+//                	Vector<Hashtable<String, Object>> instructions = (Vector<Hashtable<String, Object>>) data;
+//                	for (Hashtable<String, Object> instruction: instructions) {
+//                		drawWithInstruction(instruction);
+//                	}
+//                }
+//            });
 		} else if (tag.compareTo(MessageTag.NEW_FILE) == 0) {
 			Platform.runLater(new Runnable() {
                 @Override public void run() {        			
@@ -287,8 +287,25 @@ public class DrawingBoard extends Application{
             });
 			
 		}
+		
+		if (tag.compareTo(MessageTag.NEW_MEMBER) == 0 && dbService.isManager()) {
+			Platform.runLater(new Runnable() {
+                @Override public void run() {        			
+                	try {
+        				Image image = canvas.snapshot(new SnapshotParameters(), null);
+        				SerializableImage serializeImage = new SerializableImage();
+        				serializeImage.setImage(image);
+        				
+        				String newUser = (String) data;
+        				dbService.send(MessageTag.NEW_FILE, serializeImage, newUser);
+        			} catch (Exception e) {
+        				e.printStackTrace();
+        			}
+                }
+            });
+		}
 	}
-	
+
 	// This function draw thing with an instruction
 	public void drawWithInstruction(Hashtable<String, Object> instruction) {
 		String drawType = (String) instruction.get("type");
