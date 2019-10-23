@@ -1394,9 +1394,16 @@ public class DrawingBoard extends Application{
 	
 //	the help -> guide stage
 	public void guide() {
+		Label guideLabel = new Label();
+		guideLabel.setText("1. Drawing the circle by pressing the \"Ctrl\"");
+		guideLabel.setPrefWidth(500);
+		AnchorPane pane = new AnchorPane();
+		pane.getChildren().addAll(guideLabel);
+		Scene scene = new Scene(pane);
 		Stage guideStage = new Stage();
+		guideStage.setScene(scene);
 		guideStage.setWidth(500);
-		guideStage.setHeight(500);
+		guideStage.setHeight(300);
 		guideStage.show();
 	}
 	
