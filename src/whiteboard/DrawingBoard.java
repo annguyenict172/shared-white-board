@@ -110,7 +110,7 @@ public class DrawingBoard extends Application{
 						dbService.username = username;
 						dbService.createDrawing();
 						board();
-						stage.close();
+//						stage.close();
 					}
 					else {
 						loginStatusLabel.setText("Please input an username");
@@ -496,7 +496,6 @@ public class DrawingBoard extends Application{
 			public void handle(ActionEvent event) {
 				try {
 					newFile(canvas, graph);
-					dbService.broadcast("NEW_FILE", null);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -1507,6 +1506,7 @@ public class DrawingBoard extends Application{
 
 			public void handle(MouseEvent event) {
 				graph.clearRect(0, 0, 10000, 10000);
+				dbService.broadcast(MessageTag.NEW_FILE, null);
 				status = false;
 				stage.close();
 			}
@@ -1520,6 +1520,7 @@ public class DrawingBoard extends Application{
 				else if(status) {
 					save(canvas, graph, 2);
 				}
+				graph.clearRect(0, 0, 10000, 10000);
 				stage.close();
 			}
 		});
