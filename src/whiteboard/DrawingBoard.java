@@ -5,9 +5,7 @@ import java.rmi.RemoteException;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
-
 import javax.imageio.ImageIO;
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -48,6 +46,8 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 
 public class DrawingBoard extends Application{
@@ -1400,8 +1400,18 @@ public class DrawingBoard extends Application{
 		AnchorPane aPane = new AnchorPane();
 		
 		Scene scene = new Scene(aPane);
-		
 		Stage Stage = new Stage();
+		
+		FileChooser fChooser = new FileChooser();
+		fChooser.setTitle("Save as");
+		fChooser.setInitialFileName("PictureName");
+		fChooser.getExtensionFilters().addAll(new ExtensionFilter("png", "*.png"));
+		File picture = fChooser.showSaveDialog(Stage);
+		String filePath = "";
+		if(picture != null) {
+			filePath = picture.getAbsolutePath();
+		}
+		
 		Stage.setTitle("Save As");
 		Stage.setScene(scene);
 		Stage.setWidth(600);
@@ -1414,20 +1424,24 @@ public class DrawingBoard extends Application{
 		routeTextField.setPrefSize(500, 40);
 		routeTextField.setPromptText("Input the directory that you want to save the picture here.");
 		routeTextField.setFocusTraversable(false);	
+		if(picture != null) {
+			routeTextField.setText(filePath);
+		}
 		
-		TextField fileNameTextField = new TextField();
-		fileNameTextField.setPrefSize(500, 40);		
-		fileNameTextField.setPrefWidth(240);
-		fileNameTextField.setPromptText("The name of the file here.");
-		fileNameTextField.setFocusTraversable(false);	
+//		TextField fileNameTextField = new TextField();
+//		fileNameTextField.setPrefSize(500, 40);		
+//		fileNameTextField.setPrefWidth(240);
+//		fileNameTextField.setPromptText("The name of the file here.");
+//		fileNameTextField.setFocusTraversable(false);	
 		
-		aPane.getChildren().addAll(fileNameTextField ,routeTextField, saveAsButton);
+//		aPane.getChildren().addAll(fileNameTextField ,routeTextField, saveAsButton);
+		aPane.getChildren().addAll(routeTextField, saveAsButton);
 		aPane.setTopAnchor(saveAsButton, 200.0);
 		aPane.setLeftAnchor(saveAsButton, 245.0);
 		aPane.setTopAnchor(routeTextField, 100.0);
 		aPane.setLeftAnchor(routeTextField, 40.0);
-		aPane.setTopAnchor(fileNameTextField, 50.0);
-		aPane.setLeftAnchor(fileNameTextField, 180.0);
+//		aPane.setTopAnchor(fileNameTextField, 50.0);
+//		aPane.setLeftAnchor(fileNameTextField, 180.0);
 		Label alertLabel = new Label();			//show the operation status 
 		aPane.getChildren().add(alertLabel);
 		
@@ -1436,12 +1450,12 @@ public class DrawingBoard extends Application{
 			public void handle(MouseEvent event) {
 				WritableImage image = canvas.snapshot(new SnapshotParameters(), null);
 				try {
-					File file = new File(routeTextField.getText() + fileNameTextField.getText()+ ".png");
+					File file = new File(routeTextField.getText());
 					ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
 					alertLabel.setText("Saving success!");
 					aPane.setTopAnchor(alertLabel, 150.0);
 					aPane.setLeftAnchor(alertLabel, 245.0);
-					saveRoute = routeTextField.getText() + fileNameTextField.getText()+ ".png";
+					saveRoute = routeTextField.getText();
 					status = true;
 					if(q==1)
 						System.exit(0);
@@ -1514,6 +1528,14 @@ public class DrawingBoard extends Application{
 		Scene scene = new Scene(aPane);
 		
 		Stage stage = new Stage();
+		
+		FileChooser fChooser = new FileChooser();
+		fChooser.setTitle("Choose the picture");
+		File picture = fChooser.showOpenDialog(stage);
+		String filePath = "";
+		if (picture != null)
+			filePath = picture.getAbsolutePath();
+		
 		stage.setTitle("Open");
 		stage.setScene(scene);
 		stage.setWidth(600);
@@ -1525,7 +1547,10 @@ public class DrawingBoard extends Application{
 		TextField routeTextField = new TextField();
 		routeTextField.setPrefSize(500, 40);
 		routeTextField.setPromptText("Input the file route here.");
-		routeTextField.setFocusTraversable(false);	
+		routeTextField.setFocusTraversable(false);
+		
+		if(picture != null)
+			routeTextField.setText(filePath);
 		
 		aPane.getChildren().addAll(open ,routeTextField);
 		aPane.setTopAnchor(open, 200.0);
@@ -1540,7 +1565,13 @@ public class DrawingBoard extends Application{
 				try {
 					File file = new File(routeTextField.getText());
 					if(file.exists()){				//to see whether the rought is right				
-						Image image = new Image("file:"+routeTextField.getText());
+//						Image image = new Image("file:"+routeTextField.getText());
+						Image image;
+						if(picture != null)
+							image = new Image("file:"+file.getAbsolutePath());
+						else {
+							image = new Image("file:"+routeTextField.getText());
+						}
 						graph.clearRect(0, 0, 10000, 10000);
 						graph.drawImage(image, 0, 0);
 						
@@ -1550,7 +1581,11 @@ public class DrawingBoard extends Application{
 						dbService.broadcast(MessageTag.NEW_FILE, serializeImage);
 						
 						status = true;
-						saveRoute = routeTextField.getText();
+						if(picture != null)
+							saveRoute = picture.getAbsolutePath();
+						else {
+							saveRoute = routeTextField.getText();
+						}
 						stage.close();						
 					}
 					else {
