@@ -28,8 +28,10 @@ public class DrawingBoardServer extends UnicastRemoteObject implements RMIDrawin
 	
 	// Create a new drawing
 	public Hashtable<String, String> createDrawing(String username, RMIDrawingClient client) throws ServerError, RemoteException {
-		// Generate unique drawing ID and manager key
-		String drawingId = UUID.randomUUID().toString();
+		// Generate unique drawing ID and manager key using the manager username and 4 random digit number
+		//String drawingId = UUID.randomUUID().toString();
+		int randomNum = (int)(Math.random()*9000)+1000;
+		String drawingId = username +  String.valueOf(randomNum);;
 		String drawingKey = UUID.randomUUID().toString();
 		Hashtable<String, RMIDrawingClient> clients = new Hashtable<String, RMIDrawingClient>();
 		clients.put(username, client);

@@ -1352,6 +1352,7 @@ public class DrawingBoard extends Application{
 			dbService.quit();
 			loginStatusLabel.setText("");
 			stage.close();
+			System.exit(0);
 		});
 		
 		drawingStage = stage;
