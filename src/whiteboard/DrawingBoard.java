@@ -101,6 +101,10 @@ public class DrawingBoard extends Application{
 		Stage stage = new Stage();
 		Scene scene = new Scene(vBox);
 		
+		stage.setOnCloseRequest(e -> {
+			System.exit(0);
+		});
+		
 		createButton.setOnMouseClicked(new EventHandler<MouseEvent>() {		//create the board
 
 			public void handle(MouseEvent event) {
@@ -1352,7 +1356,8 @@ public class DrawingBoard extends Application{
 			dbService.quit();
 			loginStatusLabel.setText("");
 			stage.close();
-			System.exit(0);
+			communicationWindow.clear();
+			memberWindow.clear();
 		});
 		
 		drawingStage = stage;
