@@ -88,7 +88,13 @@ public class DrawingBoard extends Application{
 		List<String> args = getParameters().getRaw();
 		String hostName = args.get(0);
 		int port = Integer.parseInt(args.get(1));
-		dbService = new DrawingBoardService(hostName, port, "WhiteBoard", this);
+		try {
+			dbService = new DrawingBoardService(hostName, port, "WhiteBoard", this);
+		} catch (Exception e) {
+			System.err.println("Cannot connect to server.");
+			System.exit(1);
+		}
+		
 		
 		VBox vBox = new VBox();
 		HBox hBox = new HBox();
